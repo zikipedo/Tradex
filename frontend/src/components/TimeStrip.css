@@ -1,0 +1,70 @@
+.timestrip {
+  --stitch-off: rgb(42 31 23 / 0.16);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 14px 0;
+  /* Le fil de trame passe derrière toutes les mailles. */
+  background: linear-gradient(var(--line-strong), var(--line-strong)) center / 100% 1.5px no-repeat;
+}
+.timestrip--dark {
+  --stitch-off: rgb(243 236 223 / 0.2);
+}
+.timestrip__side {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  min-width: 0;
+}
+.timestrip__side--debt {
+  flex: 10 1 0;
+  justify-content: flex-end;
+}
+.timestrip__side--credit {
+  flex: 20 1 0;
+}
+.stitch {
+  flex: 1 1 0;
+  max-width: 22px;
+  min-width: 4px;
+  height: 14px;
+  border-radius: 3px;
+  background: var(--stitch-off);
+  transform: skewX(-18deg);
+  transition:
+    background-color var(--dur-base) var(--ease-out),
+    transform var(--dur-base) var(--ease-snap);
+}
+.stitch--debt.is-filled {
+  background: var(--rust);
+  transform: skewX(-18deg) scaleY(1.25);
+}
+.stitch--credit.is-filled {
+  background: var(--shea);
+  transform: skewX(-18deg) scaleY(1.25);
+}
+.timestrip--dark .stitch--credit.is-filled {
+  background: #a9b886;
+}
+.timestrip--dark .stitch--debt.is-filled {
+  background: #d9805e;
+}
+.timestrip__knot {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 3px solid var(--ochre);
+  background: var(--bg);
+}
+.timestrip--dark .timestrip__knot {
+  background: var(--ink);
+}
+.timestrip__more {
+  margin-left: 6px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
