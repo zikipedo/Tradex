@@ -74,6 +74,174 @@ namespace TradX.Infrastructure.Persistence.Migrations
                     b.ToTable("audit_logs", (string)null);
                 });
 
+            modelBuilder.Entity("TradX.Domain.Exchanges.Exchange", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid?>("BeneficiaryId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("beneficiary_id");
+
+                    b.Property<DateTimeOffset?>("ClosedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("closed_at");
+
+                    b.Property<Guid?>("ClosedById")
+                        .HasColumnType("uuid")
+                        .HasColumnName("closed_by_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("DisputeReason")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("dispute_reason");
+
+                    b.Property<int?>("DurationMinutes")
+                        .HasColumnType("integer")
+                        .HasColumnName("duration_minutes");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_at");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("kind");
+
+                    b.Property<string>("Message")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("message");
+
+                    b.Property<Guid?>("OfferedListingId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("offered_listing_id");
+
+                    b.Property<DateTimeOffset?>("OwnerConfirmedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("owner_confirmed_at");
+
+                    b.Property<Guid>("OwnerId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("owner_id");
+
+                    b.Property<Guid?>("ProviderId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("provider_id");
+
+                    b.Property<DateTimeOffset?>("RequesterConfirmedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("requester_confirmed_at");
+
+                    b.Property<Guid>("RequesterId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("requester_id");
+
+                    b.Property<string>("ResolutionNote")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("resolution_note");
+
+                    b.Property<DateTimeOffset?>("RespondedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("responded_at");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("status");
+
+                    b.Property<Guid>("TargetListingId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("target_listing_id");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id")
+                        .HasName("pk_exchanges");
+
+                    b.HasIndex("OfferedListingId")
+                        .HasDatabaseName("ix_exchanges_offered_listing_id");
+
+                    b.HasIndex("TargetListingId")
+                        .HasDatabaseName("ix_exchanges_target_listing_id");
+
+                    b.HasIndex("OwnerId", "CreatedAt")
+                        .HasDatabaseName("ix_exchanges_owner_id_created_at");
+
+                    b.HasIndex("RequesterId", "CreatedAt")
+                        .HasDatabaseName("ix_exchanges_requester_id_created_at");
+
+                    b.HasIndex("Status", "ExpiresAt")
+                        .HasDatabaseName("ix_exchanges_status_expires_at");
+
+                    b.ToTable("exchanges", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_exchanges_duration", "duration_minutes IS NULL OR (duration_minutes BETWEEN 30 AND 480 AND duration_minutes % 30 = 0)");
+
+                            t.HasCheckConstraint("ck_exchanges_not_self", "requester_id <> owner_id");
+                        });
+                });
+
+            modelBuilder.Entity("TradX.Domain.Exchanges.TimeTransaction", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("ExchangeId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("exchange_id");
+
+                    b.Property<Guid>("FromUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("from_user_id");
+
+                    b.Property<int>("Minutes")
+                        .HasColumnType("integer")
+                        .HasColumnName("minutes");
+
+                    b.Property<Guid>("ToUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("to_user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_time_transactions");
+
+                    b.HasIndex("ExchangeId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_time_transactions_exchange_id");
+
+                    b.HasIndex("FromUserId", "CreatedAt")
+                        .HasDatabaseName("ix_time_transactions_from_user_id_created_at");
+
+                    b.HasIndex("ToUserId", "CreatedAt")
+                        .HasDatabaseName("ix_time_transactions_to_user_id_created_at");
+
+                    b.ToTable("time_transactions", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_time_transactions_not_self", "from_user_id <> to_user_id");
+
+                            t.HasCheckConstraint("ck_time_transactions_positive", "minutes > 0");
+                        });
+                });
+
             modelBuilder.Entity("TradX.Domain.Listings.Category", b =>
                 {
                     b.Property<Guid>("Id")
@@ -506,6 +674,60 @@ namespace TradX.Infrastructure.Persistence.Migrations
                         {
                             t.HasCheckConstraint("ck_users_time_balance_range", "time_balance_minutes BETWEEN -300 AND 6000");
                         });
+                });
+
+            modelBuilder.Entity("TradX.Domain.Exchanges.Exchange", b =>
+                {
+                    b.HasOne("TradX.Domain.Listings.Listing", null)
+                        .WithMany()
+                        .HasForeignKey("OfferedListingId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_exchanges_listings_offered_listing_id");
+
+                    b.HasOne("TradX.Domain.Users.User", null)
+                        .WithMany()
+                        .HasForeignKey("OwnerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_exchanges_users_owner_id");
+
+                    b.HasOne("TradX.Domain.Users.User", null)
+                        .WithMany()
+                        .HasForeignKey("RequesterId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_exchanges_users_requester_id");
+
+                    b.HasOne("TradX.Domain.Listings.Listing", null)
+                        .WithMany()
+                        .HasForeignKey("TargetListingId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_exchanges_listings_target_listing_id");
+                });
+
+            modelBuilder.Entity("TradX.Domain.Exchanges.TimeTransaction", b =>
+                {
+                    b.HasOne("TradX.Domain.Exchanges.Exchange", null)
+                        .WithMany()
+                        .HasForeignKey("ExchangeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_time_transactions_exchanges_exchange_id");
+
+                    b.HasOne("TradX.Domain.Users.User", null)
+                        .WithMany()
+                        .HasForeignKey("FromUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_time_transactions_users_from_user_id");
+
+                    b.HasOne("TradX.Domain.Users.User", null)
+                        .WithMany()
+                        .HasForeignKey("ToUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_time_transactions_users_to_user_id");
                 });
 
             modelBuilder.Entity("TradX.Domain.Listings.Listing", b =>

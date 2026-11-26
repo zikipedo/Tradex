@@ -25,7 +25,7 @@ public sealed class UserServiceTests : IAsyncLifetime
     private UserService ServiceFor(Guid? userId)
     {
         var current = CurrentUserFactory.For(userId);
-        return new UserService(_db, current, new AuditLogger(_db, current, TimeProvider.System), new UserStatisticsService());
+        return new UserService(_db, current, new AuditLogger(_db, current, TimeProvider.System), new UserStatisticsService(_db));
     }
 
     [Fact]

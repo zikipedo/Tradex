@@ -2,6 +2,7 @@ using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 using TradX.Application.Auth;
 using TradX.Application.Common;
+using TradX.Application.Exchanges;
 using TradX.Application.Listings;
 using TradX.Application.Users;
 
@@ -25,6 +26,9 @@ public static class DependencyInjection
         services.AddScoped<ICategoryService, CategoryService>();
         services.AddScoped<IListingService, ListingService>();
         services.AddScoped<IListingPhotoService, ListingPhotoService>();
+        services.AddScoped<IExchangeService, ExchangeService>();
+        services.AddScoped<ITimeAccountService, TimeAccountService>();
+        services.AddScoped<IExchangeMaintenance, ExchangeMaintenance>();
         return services;
     }
 }

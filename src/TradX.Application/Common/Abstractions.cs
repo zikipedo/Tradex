@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using TradX.Domain.Audit;
+using TradX.Domain.Exchanges;
 using TradX.Domain.Listings;
 using TradX.Domain.Users;
 
@@ -26,6 +27,12 @@ public interface IAppDbContext
 
     /// <summary>Annonces (les photos sont chargées via <see cref="Listing.Photos"/>).</summary>
     DbSet<Listing> Listings { get; }
+
+    /// <summary>Échanges entre membres.</summary>
+    DbSet<Exchange> Exchanges { get; }
+
+    /// <summary>Grand livre de la banque de temps (ajout uniquement).</summary>
+    DbSet<TimeTransaction> TimeTransactions { get; }
 
     /// <summary>Enregistre toutes les modifications en une seule transaction.</summary>
     /// <param name="cancellationToken">Jeton d'annulation.</param>

@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using TradX.Api.Background;
 using TradX.Api.Errors;
 using TradX.Api.Security;
 using TradX.Api.Validation;
@@ -40,6 +41,12 @@ internal static class ApiServiceCollectionExtensions
         EnsureProductionEmailIsReal(configuration, environment);
         services.AddApiSecurity(configuration);
         services.AddOpenApi();
+
+        if (configuration.GetValue("Workers:ExchangeExpiration:Enabled", true))
+        {
+            services.AddHostedService<ExchangeExpirationWorker>();
+        }
+
         return services;
     }
 
