@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/TradX.Api/TradX.Api.csproj" />
+    <Project Path="src/TradX.Application/TradX.Application.csproj" />
+    <Project Path="src/TradX.Domain/TradX.Domain.csproj" />
+    <Project Path="src/TradX.Infrastructure/TradX.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/TradX.IntegrationTests/TradX.IntegrationTests.csproj" />
+    <Project Path="tests/TradX.UnitTests/TradX.UnitTests.csproj" />
+  </Folder>
+</Solution>

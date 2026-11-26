@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <!-- Point d'entrée HTTP : contrôleurs, middleware, configuration. -->
+  <PropertyGroup>
+    <UserSecretsId>tradx-api-dev</UserSecretsId>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\TradX.Application\TradX.Application.csproj" />
+    <ProjectReference Include="..\TradX.Infrastructure\TradX.Infrastructure.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="Scalar.AspNetCore" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="TradX.UnitTests" />
+    <InternalsVisibleTo Include="TradX.IntegrationTests" />
+  </ItemGroup>
+</Project>

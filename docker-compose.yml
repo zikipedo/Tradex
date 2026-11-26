@@ -1,0 +1,36 @@
+# Services locaux de développement TradX.
+#   docker compose up -d                      -> PostgreSQL
+#   docker compose --profile quality up -d    -> PostgreSQL + SonarQube (analyse de code)
+# Les mots de passe ci-dessous sont UNIQUEMENT pour le développement local (jamais en production).
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: tradx-postgres
+    environment:
+      POSTGRES_DB: tradx
+      POSTGRES_USER: tradx
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-tradx_dev_only}
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - tradx-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tradx -d tradx"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  sonarqube:
+    image: sonarqube:community
+    container_name: tradx-sonarqube
+    profiles: ["quality"]
+    ports:
+      - "127.0.0.1:9000:9000"
+    volumes:
+      - tradx-sonar-data:/opt/sonarqube/data
+      - tradx-sonar-extensions:/opt/sonarqube/extensions
+
+volumes:
+  tradx-pgdata:
+  tradx-sonar-data:
+  tradx-sonar-extensions:

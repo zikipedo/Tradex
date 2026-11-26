@@ -1,0 +1,6 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Cœur métier : aucune dépendance externe. -->
+  <ItemGroup>
+    <InternalsVisibleTo Include="TradX.UnitTests" />
+  </ItemGroup>
+</Project>

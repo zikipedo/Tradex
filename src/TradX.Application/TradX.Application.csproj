@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Cas d'utilisation : dépend du domaine, jamais de l'infrastructure ni de l'API. -->
+  <ItemGroup>
+    <ProjectReference Include="..\TradX.Domain\TradX.Domain.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="FluentValidation" />
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="TradX.UnitTests" />
+  </ItemGroup>
+</Project>
