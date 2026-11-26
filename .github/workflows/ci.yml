@@ -1,0 +1,62 @@
+# Intégration continue TradX : à chaque push et pull request.
+# 1. compilation sans avertissement, 2. tous les tests (unitaires + intégration PostgreSQL via Testcontainers),
+# 3. analyse des dépendances vulnérables, 4. analyse SonarCloud (si le secret SONAR_TOKEN est configuré).
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Restauration des outils et paquets
+        run: |
+          dotnet tool restore
+          dotnet restore
+
+      - name: Compilation (avertissements = erreurs)
+        run: dotnet build --no-restore -c Release
+
+      - name: Tests unitaires et d'intégration avec couverture
+        run: >
+          dotnet test --no-build -c Release
+          --collect:"XPlat Code Coverage;Format=opencover"
+          --results-directory TestResults
+
+      - name: Dépendances vulnérables (échec si une vulnérabilité est trouvée)
+        run: |
+          dotnet list package --vulnerable --include-transitive --format json > vulnerable.json
+          cat vulnerable.json
+          count=$(jq '[.projects[].frameworks[]? | (.topLevelPackages // []) + (.transitivePackages // []) | .[]] | length' vulnerable.json)
+          echo "Paquets vulnérables : $count"
+          test "$count" -eq 0
+
+      - name: Analyse SonarCloud
+        if: env.SONAR_TOKEN != ''
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_PROJECT_KEY: ${{ vars.SONAR_PROJECT_KEY }}
+          SONAR_ORGANIZATION: ${{ vars.SONAR_ORGANIZATION }}
+        run: |
+          dotnet sonarscanner begin /k:"$SONAR_PROJECT_KEY" /o:"$SONAR_ORGANIZATION" \
+            /d:sonar.host.url="https://sonarcloud.io" /d:sonar.token="$SONAR_TOKEN" \
+            /d:sonar.cs.opencover.reportsPaths="TestResults/**/coverage.opencover.xml" \
+            /d:sonar.exclusions="**/Migrations/**"
+          dotnet build --no-restore -c Release
+          dotnet test --no-build -c Release --collect:"XPlat Code Coverage;Format=opencover" --results-directory TestResults
+          dotnet sonarscanner end /d:sonar.token="$SONAR_TOKEN"
