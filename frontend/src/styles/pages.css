@@ -1,0 +1,415 @@
+/* Éléments partagés par les écrans de l'application (hors page d'accueil). */
+
+/* ---------- En-tête de page ---------- */
+
+.page {
+  padding-top: var(--s6);
+  padding-bottom: var(--s8);
+}
+.page-head {
+  display: grid;
+  gap: var(--s3);
+  padding-bottom: var(--s6);
+  margin-bottom: var(--s6);
+  border-bottom: 1.5px solid var(--ink);
+}
+.page-head--split {
+  grid-template-columns: 1fr auto;
+  align-items: end;
+}
+.page-head .label {
+  color: var(--text-2);
+}
+@media (max-width: 640px) {
+  .page-head--split {
+    grid-template-columns: 1fr;
+  }
+}
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s2);
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-decoration: none;
+  color: var(--text-2);
+  margin-bottom: var(--s4);
+}
+.back-link:hover {
+  color: var(--ink);
+}
+
+/* ---------- Panneaux ---------- */
+
+.panel {
+  padding: clamp(1.25rem, 3vw, 2rem);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+}
+@supports (corner-shape: squircle) {
+  .panel {
+    corner-shape: squircle;
+    border-radius: calc(var(--r-md) * 1.6);
+  }
+}
+.panel--kaolin {
+  background: var(--kaolin);
+  border-color: transparent;
+}
+.panel > * + * {
+  margin-top: var(--s4);
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--s5);
+}
+.form-grid > .span-2 {
+  grid-column: 1 / -1;
+}
+@media (max-width: 640px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s3);
+  align-items: center;
+}
+
+/* ---------- Choix en pastilles ---------- */
+
+.segmented {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.segmented legend {
+  font-size: 0.88rem;
+  font-weight: 500;
+  margin-bottom: var(--s2);
+  padding: 0;
+}
+.segmented__options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2);
+}
+.segmented__option {
+  position: relative;
+  display: grid;
+  gap: 2px;
+  padding: 0.65rem 1rem;
+  min-height: 44px;
+  align-content: center;
+  border: 1.5px solid var(--line-strong);
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  font-weight: 500;
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out);
+}
+.segmented__option small {
+  font-weight: 400;
+  font-size: 0.8rem;
+  color: var(--text-2);
+}
+.segmented__option input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.segmented__option:hover {
+  border-color: var(--ink);
+}
+.segmented__option.is-active {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--cotton);
+}
+.segmented__option.is-active small {
+  color: #d9ccb7;
+}
+.segmented__option:has(input:focus-visible) {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* ---------- Onglets ---------- */
+
+.tabs {
+  display: flex;
+  gap: var(--s5);
+  border-bottom: 1px solid var(--line);
+  margin-bottom: var(--s5);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.tabs button {
+  position: relative;
+  padding: var(--s3) 0;
+  border: 0;
+  background: none;
+  font-weight: 500;
+  color: var(--text-2);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.tabs button[aria-selected='true'] {
+  color: var(--ink);
+}
+.tabs button[aria-selected='true']::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 3px;
+  background: var(--ochre);
+  border-radius: 3px 3px 0 0;
+}
+
+/* ---------- Écrans d'authentification ---------- */
+
+.auth {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  min-height: calc(100dvh - 72px);
+}
+.auth__aside {
+  position: relative;
+  display: grid;
+  align-content: space-between;
+  gap: var(--s6);
+  padding: var(--s7) var(--gutter);
+  overflow: hidden;
+}
+.auth__aside .display {
+  font-size: clamp(2.6rem, 5vw, 5.2rem);
+}
+.auth__aside .band {
+  color: var(--ochre);
+  opacity: 0.6;
+}
+.auth__main {
+  display: grid;
+  align-content: center;
+  padding: var(--s7) var(--gutter);
+}
+.auth__form {
+  width: min(100%, 440px);
+  display: grid;
+  gap: var(--s5);
+}
+.auth__form .h2 {
+  margin-bottom: var(--s2);
+}
+.auth__alt {
+  font-size: 0.95rem;
+  color: var(--text-2);
+}
+@media (max-width: 860px) {
+  .auth {
+    grid-template-columns: 1fr;
+  }
+  .auth__aside {
+    padding-block: var(--s6);
+  }
+  .auth__aside .display {
+    font-size: clamp(2.2rem, 10vw, 3.4rem);
+  }
+}
+
+/* ---------- Liste de lignes (échanges, mouvements) ---------- */
+
+.rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1.5px solid var(--ink);
+}
+.row {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: var(--s2) var(--s5);
+  align-items: center;
+  padding: var(--s4) 0;
+  border-bottom: 1px solid var(--line);
+}
+.row__title {
+  font-family: var(--font-display);
+  font-variation-settings: 'SOFT' 100;
+  font-weight: 600;
+  font-size: 1.15rem;
+  letter-spacing: -0.015em;
+  line-height: 1.15;
+}
+.row__title a {
+  text-decoration: none;
+}
+.row__title a::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+.row__title a:focus-visible {
+  outline: none;
+}
+.row:has(a:focus-visible) {
+  outline: 2px solid var(--focus);
+  outline-offset: 4px;
+  border-radius: var(--r-sm);
+}
+.row:hover .row__title {
+  color: var(--rust);
+}
+.row__meta {
+  font-size: 0.88rem;
+  color: var(--text-3);
+}
+.row__icon {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--kaolin);
+}
+@media (max-width: 560px) {
+  .row {
+    grid-template-columns: auto 1fr;
+  }
+  .row > :last-child {
+    grid-column: 2;
+    justify-self: start;
+  }
+}
+
+/* ---------- États vides ---------- */
+
+.empty {
+  display: grid;
+  justify-items: start;
+  gap: var(--s3);
+  padding: var(--s7) var(--s6);
+  border: 1.5px dashed var(--line-strong);
+  border-radius: var(--r-md);
+}
+.empty svg {
+  color: var(--rust);
+}
+
+/* ---------- Pagination ---------- */
+
+.pager {
+  display: flex;
+  justify-content: center;
+  margin-top: var(--s7);
+}
+
+/* ---------- Boîte de dialogue ---------- */
+
+dialog.dialog {
+  width: min(560px, calc(100% - 2rem));
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-lg);
+  background: var(--cotton-2);
+  color: var(--ink);
+  box-shadow: var(--shadow-2);
+}
+dialog.dialog::backdrop {
+  background: rgb(42 31 23 / 0.55);
+}
+.dialog__body {
+  display: grid;
+  gap: var(--s5);
+  padding: var(--s6);
+}
+
+/* ---------- Compte de temps et chiffres de confiance ---------- */
+
+.time-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--s2) var(--s5);
+  font-size: 0.88rem;
+  color: var(--text-2);
+}
+.trust-mini {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--s5);
+  margin: 0;
+}
+.trust-mini > div {
+  padding-top: var(--s3);
+  border-top: 1px solid var(--line);
+}
+.trust-mini dt {
+  font-size: var(--fs-label);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  font-weight: 500;
+  color: var(--text-2);
+}
+.trust-mini dd {
+  margin: var(--s2) 0 0;
+  font-family: var(--font-display);
+  font-variation-settings: 'SOFT' 100;
+  font-size: clamp(1.8rem, 4vw, 3rem);
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+@media (max-width: 560px) {
+  .trust-mini {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- Pages éditoriales ---------- */
+
+.prose {
+  max-width: 68ch;
+  display: grid;
+  gap: var(--s5);
+}
+.prose h2 {
+  margin-top: var(--s5);
+}
+.prose ol,
+.prose ul {
+  margin: 0;
+  padding-left: 1.2em;
+  display: grid;
+  gap: var(--s2);
+}
+.prose li::marker {
+  color: var(--rust);
+  font-weight: 700;
+}
+
+/* ---------- Lien d'action discret (signaler, litige) ---------- */
+
+.report-link {
+  justify-self: start;
+  border: 0;
+  background: none;
+  padding: var(--s2) 0;
+  color: var(--text-2);
+  font-size: 0.88rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.report-link:hover {
+  color: var(--rust);
+}

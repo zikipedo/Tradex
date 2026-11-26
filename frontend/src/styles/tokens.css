@@ -1,0 +1,88 @@
+/*
+ * Direction artistique « Bogolan » : le tissu malien peint à la boue.
+ * Un sombre profond (l'encre), un clair « coton », des terres, un seul accent d'action (l'ocre).
+ * Contrastes WCAG calculés : encre sur coton 13,7:1 · rouille sur coton 6,2:1 · encre sur ocre 5,1:1 ·
+ * texte secondaire 7,2:1 · texte tertiaire 4,5:1 (métadonnées, jamais sur fond kaolin où il tombe à 3,9:1).
+ * L'ocre n'est jamais utilisé pour du texte sur fond clair (contraste insuffisant) : il sert de fond aux actions.
+ * Focus : indigo sur fond clair (5,8:1), ocre sur fond encre (5,1:1) via la classe `.on-ink`.
+ */
+@import '@fontsource-variable/fraunces/soft.css';
+@import '@fontsource-variable/fraunces/soft-italic.css';
+@import '@fontsource/schibsted-grotesk/400.css';
+@import '@fontsource/schibsted-grotesk/500.css';
+@import '@fontsource/schibsted-grotesk/700.css';
+
+:root {
+  /* Palette */
+  --ink: #2a1f17;
+  --ink-2: #4a3a2e;
+  --cotton: #f3ecdf;
+  --cotton-2: #fbf7ef;
+  --kaolin: #e6dac4;
+  --ochre: #c4842f;
+  --ochre-hover: #d39443;
+  --rust: #8e3f23;
+  --shea: #5f6a46;
+  --shea-soft: #dfe2cf;
+  --rust-soft: #f0d9cd;
+
+  /* Rôles */
+  --bg: var(--cotton);
+  --surface: var(--cotton-2);
+  --text: var(--ink);
+  --text-2: #5b4a3c; /* 7,4:1 sur coton */
+  --text-3: #7a6857; /* 4,6:1 sur coton : métadonnées seulement */
+  --line: rgb(42 31 23 / 0.14);
+  --line-strong: rgb(42 31 23 / 0.32);
+  --action: var(--ochre);
+  --on-action: var(--ink);
+  --accent-text: var(--rust);
+  --credit: var(--shea);
+  --debit: var(--rust);
+  --focus: #1f5f8b; /* indigo de teinture : visible sur tous les fonds de la palette */
+
+  /* Typographie */
+  --font-display: 'Fraunces Variable', 'Iowan Old Style', Georgia, serif;
+  --font-ui: 'Schibsted Grotesk', 'Segoe UI', system-ui, sans-serif;
+  --fs-display: clamp(3rem, 8.6vw, 9.25rem);
+  --fs-h1: clamp(2.4rem, 5.4vw, 5.4rem);
+  --fs-h2: clamp(1.9rem, 3.6vw, 3.4rem);
+  --fs-h3: clamp(1.25rem, 1.8vw, 1.6rem);
+  --fs-body: 1.0625rem;
+  --fs-small: 0.9rem;
+  --fs-label: 0.72rem;
+  --tracking-label: 0.16em;
+
+  /* Espacements (échelle 4 px) */
+  --s1: 0.25rem;
+  --s2: 0.5rem;
+  --s3: 0.75rem;
+  --s4: 1rem;
+  --s5: 1.5rem;
+  --s6: 2rem;
+  --s7: 3rem;
+  --s8: 4.5rem;
+  --s9: 7rem;
+  --gutter: clamp(1rem, 4vw, 3.5rem);
+  --max: 1360px;
+
+  /* Formes : squircle quand le navigateur sait le dessiner */
+  --r-sm: 10px;
+  --r-md: 18px;
+  --r-lg: 30px;
+  --r-pill: 999px;
+
+  /* Profondeur : ombres chaudes, jamais grises */
+  --shadow-1: 0 1px 0 rgb(42 31 23 / 0.06), 0 8px 24px -12px rgb(42 31 23 / 0.28);
+  --shadow-2: 0 2px 0 rgb(42 31 23 / 0.05), 0 28px 60px -28px rgb(42 31 23 / 0.45);
+
+  /* Mouvement (mesuré sur les références : entrées 640–760 ms, décalage 110–230 ms) */
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-snap: cubic-bezier(0.2, 0.9, 0.25, 1.1);
+  --dur-fast: 160ms;
+  --dur-base: 320ms;
+  --dur-slow: 700ms;
+
+  /* Grain de coton (bruit SVG rastérisé une seule fois par le navigateur) */
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .16 0 0 0 0 .12 0 0 0 0 .09 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}

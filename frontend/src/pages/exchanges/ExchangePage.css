@@ -1,0 +1,231 @@
+.xpage__head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: end;
+  gap: var(--s4);
+}
+.xpage__head .h1 {
+  font-size: clamp(2rem, 4.4vw, 4rem);
+  margin-top: var(--s2);
+}
+.xpage__status {
+  font-size: 0.9rem;
+}
+
+/* ---------- Le fil de l'échange ---------- */
+
+.xknot {
+  margin: var(--s5) 0 var(--s6);
+}
+.xknot svg {
+  width: 100%;
+  height: auto;
+  max-height: 180px;
+  overflow: visible;
+}
+.xknot path {
+  fill: none;
+  stroke-width: 5;
+  stroke-linecap: round;
+}
+.xknot__a {
+  stroke: var(--ochre);
+}
+.xknot__b {
+  stroke: var(--rust);
+}
+.xknot .knot circle:first-child {
+  fill: var(--cotton);
+  stroke: var(--ink);
+  stroke-width: 3;
+}
+.xknot .knot circle:last-child {
+  fill: var(--ink);
+}
+.xknot--completed .knot circle:last-child {
+  fill: var(--shea);
+}
+.xknot--disputed .knot circle:first-child {
+  stroke: var(--rust);
+  stroke-dasharray: 4 4;
+}
+.xknot--declined path,
+.xknot--cancelled path,
+.xknot--expired path {
+  stroke-dasharray: 2 10;
+  opacity: 0.6;
+}
+.xknot__names {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 700;
+  font-size: 0.92rem;
+}
+
+/* ---------- Grille ---------- */
+
+.xpage__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--s7);
+  align-items: start;
+}
+.xpage__main {
+  display: grid;
+  gap: var(--s5);
+}
+@media (max-width: 900px) {
+  .xpage__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.terms {
+  display: grid;
+  gap: var(--s4);
+  margin: 0;
+}
+.terms > div {
+  padding: var(--s4) 0;
+  border-top: 1.5px solid var(--ink);
+}
+.terms dt {
+  font-size: var(--fs-label);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  font-weight: 500;
+  color: var(--accent-text);
+}
+.terms dd {
+  margin: var(--s2) 0 0;
+  font-family: var(--font-display);
+  font-variation-settings: 'SOFT' 100;
+  font-weight: 600;
+  font-size: 1.35rem;
+  letter-spacing: -0.015em;
+  line-height: 1.2;
+}
+.xpage__note {
+  margin: 0;
+  padding-left: var(--s4);
+  border-left: 3px solid var(--ochre);
+}
+.xpage__note p {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 1.2rem;
+}
+.xpage__note cite {
+  font-style: normal;
+  font-size: 0.86rem;
+  color: var(--text-3);
+}
+
+/* ---------- Avis ---------- */
+
+.review {
+  display: grid;
+  gap: var(--s4);
+}
+.review > * + * {
+  margin-top: 0;
+}
+.stars {
+  display: flex;
+  gap: var(--s2);
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+.stars label {
+  position: relative;
+  cursor: pointer;
+  font-size: 1.9rem;
+  line-height: 1;
+  color: var(--line-strong);
+  transition: transform var(--dur-fast) var(--ease-snap);
+}
+.stars label.is-on {
+  color: var(--ochre);
+}
+.stars label:hover {
+  transform: scale(1.15);
+}
+.stars input {
+  position: absolute;
+  opacity: 0;
+}
+.stars label:has(input:focus-visible) {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: 50%;
+}
+
+/* ---------- Conversation ---------- */
+
+.chat {
+  display: grid;
+  gap: var(--s3);
+  position: sticky;
+  top: 96px;
+}
+.chat > * + * {
+  margin-top: 0;
+}
+.chat__list {
+  display: grid;
+  gap: var(--s2);
+  list-style: none;
+  margin: 0;
+  padding: var(--s2) 0;
+  max-height: min(56vh, 520px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.bubble {
+  max-width: 82%;
+  justify-self: start;
+  padding: var(--s3) var(--s4);
+  border-radius: 18px 18px 18px 4px;
+  background: var(--kaolin);
+}
+.bubble p {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.bubble--mine {
+  justify-self: end;
+  border-radius: 18px 18px 4px 18px;
+  background: var(--ink);
+  color: var(--cotton);
+}
+.bubble__meta {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.74rem;
+  opacity: 0.75;
+}
+.chat__form {
+  display: flex;
+  gap: var(--s2);
+  align-items: end;
+}
+.chat__form textarea {
+  flex: 1;
+  min-height: 48px;
+  max-height: 160px;
+  padding: var(--s3);
+  border: 1.5px solid var(--line-strong);
+  border-radius: var(--r-sm);
+  background: var(--cotton);
+  resize: vertical;
+}
+.chat__empty {
+  padding: var(--s5) 0;
+}
+@media (max-width: 900px) {
+  .chat {
+    position: static;
+  }
+}
