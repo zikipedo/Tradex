@@ -70,6 +70,7 @@ public sealed class TradXApiFactory : WebApplicationFactory<Program>, IAsyncLife
         builder.UseSetting("Cors:AllowedOrigins:0", "http://localhost:5173");
         builder.UseSetting("Jwt:SigningKey", TestSigningKey);
         builder.UseSetting("Storage:RootPath", _storageRoot);
+        builder.UseSetting("Workers:ExchangeExpiration:Enabled", "false");
         // Limites très hautes pour les tests fonctionnels ; un test dédié vérifie la limitation.
         builder.UseSetting("RateLimiting:AuthPermitLimit", "100000");
         builder.UseSetting("RateLimiting:WritePermitLimit", "100000");

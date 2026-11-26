@@ -1,12 +1,18 @@
+using Microsoft.EntityFrameworkCore;
+using TradX.Application.Common;
+using TradX.Domain.Exchanges;
+
 namespace TradX.Application.Users;
 
-/// <summary>
-/// Calcul des statistiques publiques d'un membre.
-/// Les avis et les échanges sont ajoutés aux étapes suivantes ; en attendant, aucun avis ni échange.
-/// </summary>
-internal sealed class UserStatisticsService : IUserStatistics
+/// <summary>Calcul des statistiques publiques d'un membre (avis reçus, échanges terminés).</summary>
+/// <param name="db">Contexte de données.</param>
+internal sealed class UserStatisticsService(IAppDbContext db) : IUserStatistics
 {
     /// <inheritdoc />
-    public Task<UserStatistics> GetAsync(Guid userId, CancellationToken ct) =>
-        Task.FromResult(new UserStatistics(null, 0, 0));
+    public async Task<UserStatistics> GetAsync(Guid userId, CancellationToken ct)
+    {
+        var completed = await db.Exchanges.CountAsync(e => e.Status == ExchangeStatus.Completed
+            && (e.RequesterId == userId || e.OwnerId == userId), ct);
+        return new UserStatistics(null, 0, completed);
+    }
 }
