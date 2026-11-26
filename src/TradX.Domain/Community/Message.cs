@@ -5,7 +5,7 @@ namespace TradX.Domain.Community;
 
 /// <summary>
 /// Message échangé entre les deux parties d'un échange. Personne d'autre ne peut le lire.
-/// L'identifiant GUID v7 étant trié dans le temps, il sert aussi de curseur de pagination.
+/// Son identifiant sert de curseur de pagination (ordre : date d'envoi, puis identifiant).
 /// </summary>
 public sealed class Message : Entity
 {

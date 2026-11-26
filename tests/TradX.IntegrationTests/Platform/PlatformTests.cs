@@ -114,4 +114,34 @@ public sealed class PlatformTests(TradXApiFactory factory)
                 db.Database.ExecuteSqlAsync($"DELETE FROM audit_logs WHERE id = {entry.Id}"));
         });
     }
+
+    [Fact]
+    public async Task Global_rate_limit_applies_to_anonymous_reads()
+    {
+        using var limited = factory.WithWebHostBuilder(b => b.UseSetting("RateLimiting:GlobalPermitLimit", "5"));
+        var client = limited.CreateClient();
+
+        for (var i = 0; i < 5; i++)
+        {
+            (await client.GetAsync("/api/v1/categories")).StatusCode.ShouldBe(HttpStatusCode.OK);
+        }
+
+        (await client.GetAsync("/api/v1/categories")).StatusCode.ShouldBe(HttpStatusCode.TooManyRequests);
+    }
+
+    [Fact]
+    public async Task Forwarded_for_header_from_untrusted_source_is_ignored()
+    {
+        using var limited = factory.WithWebHostBuilder(b => b.UseSetting("RateLimiting:GlobalPermitLimit", "2"));
+        var client = limited.CreateClient();
+
+        for (var i = 0; i < 3; i++)
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Get, "/api/v1/categories");
+            // Un attaquant change d'IP « déclarée » à chaque requête pour contourner la limite.
+            request.Headers.Add("X-Forwarded-For", $"203.0.113.{i + 1}");
+            var response = await client.SendAsync(request);
+            response.StatusCode.ShouldBe(i < 2 ? HttpStatusCode.OK : HttpStatusCode.TooManyRequests);
+        }
+    }
 }
