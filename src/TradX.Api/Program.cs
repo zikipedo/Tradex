@@ -1,4 +1,5 @@
 using TradX.Api.Configuration;
+using TradX.Api.Security;
 using TradX.Application;
 using TradX.Infrastructure;
 
@@ -13,6 +14,8 @@ builder.WebHost.ConfigureKestrel(kestrel =>
     // Taille maximale d'une requête : 1 Mo (les endpoints d'upload ont leur propre limite).
     kestrel.Limits.MaxRequestBodySize = 1 * 1024 * 1024;
 });
+
+builder.Configuration.EnsureDevelopmentSigningKey(builder.Environment);
 
 builder.Services
     .AddApplication()

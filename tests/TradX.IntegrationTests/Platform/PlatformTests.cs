@@ -37,9 +37,19 @@ public sealed class PlatformTests(TradXApiFactory factory)
     }
 
     [Fact]
-    public async Task Unknown_route_returns_problem_details_404()
+    public async Task Unknown_route_is_denied_by_default_for_anonymous_callers()
     {
         var response = await _client.GetAsync("/api/v1/does-not-exist");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task Unknown_route_returns_problem_details_404_for_authenticated_callers()
+    {
+        var member = await factory.CreateMemberAsync();
+
+        var response = await member.Client.GetAsync("/api/v1/does-not-exist");
 
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
         response.Content.Headers.ContentType!.MediaType.ShouldBe("application/problem+json");

@@ -1,6 +1,8 @@
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
+using TradX.Application.Auth;
 using TradX.Application.Common;
+using TradX.Application.Users;
 
 namespace TradX.Application;
 
@@ -16,6 +18,9 @@ public static class DependencyInjection
         services.AddValidatorsFromAssembly(typeof(DependencyInjection).Assembly, includeInternalTypes: true);
 
         services.AddScoped<IAuditLogger, AuditLogger>();
+        services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IUserService, UserService>();
+        services.AddScoped<IUserStatistics, UserStatisticsService>();
         return services;
     }
 }

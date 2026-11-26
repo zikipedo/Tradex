@@ -31,17 +31,23 @@ internal static class ApiPipelineExtensions
 
         app.UseCors(ApiServiceCollectionExtensions.FrontendCorsPolicy);
 
+        // 4. Qui est-ce ? A-t-il le droit ? Pas trop de requêtes ? (le limiteur utilise l'identité).
+        app.UseAuthentication();
+        app.UseAuthorization();
+        app.UseRateLimiter();
+
         app.MapControllers();
-        app.MapHealthChecks("/health");
+        app.MapHealthChecks("/health").AllowAnonymous();
 
         // Documentation interactive : uniquement en développement (jamais exposée en production).
         if (app.Environment.IsDevelopment())
         {
-            app.MapOpenApi();
-            app.MapScalarApiReference();
+            app.MapOpenApi().AllowAnonymous();
+            app.MapScalarApiReference().AllowAnonymous();
         }
 
         await ApplyMigrationsIfEnabledAsync(app);
+        await AdminBootstrapper.PromoteConfiguredAdminAsync(app);
     }
 
     /// <summary>

@@ -37,8 +37,19 @@ internal static class ApiServiceCollectionExtensions
         services.AddExceptionHandler<GlobalExceptionHandler>();
 
         AddCors(services, configuration, environment);
+        EnsureProductionEmailIsReal(configuration, environment);
+        services.AddApiSecurity(configuration);
         services.AddOpenApi();
         return services;
+    }
+
+    /// <summary>En production, les e-mails doivent partir par SMTP (le mode fichier est réservé au développement).</summary>
+    private static void EnsureProductionEmailIsReal(IConfiguration configuration, IWebHostEnvironment environment)
+    {
+        if (environment.IsProduction() && !string.Equals(configuration["Email:Mode"], "Smtp", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException("En production, Email:Mode doit valoir 'Smtp'.");
+        }
     }
 
     /// <summary>

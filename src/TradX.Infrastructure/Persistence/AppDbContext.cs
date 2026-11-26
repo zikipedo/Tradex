@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using TradX.Application.Common;
 using TradX.Domain.Audit;
+using TradX.Domain.Users;
 
 namespace TradX.Infrastructure.Persistence;
 
@@ -14,6 +15,12 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
 {
     /// <inheritdoc />
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+
+    /// <inheritdoc />
+    public DbSet<User> Users => Set<User>();
+
+    /// <inheritdoc />
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
     /// <inheritdoc />
     protected override void OnModelCreating(ModelBuilder modelBuilder)
