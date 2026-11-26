@@ -25,7 +25,6 @@ namespace TradX.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("TradX.Domain.Audit.AuditLog", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
@@ -75,10 +74,274 @@ namespace TradX.Infrastructure.Persistence.Migrations
                     b.ToTable("audit_logs", (string)null);
                 });
 
+            modelBuilder.Entity("TradX.Domain.Listings.Category", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_active");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)")
+                        .HasColumnName("name");
+
+                    b.HasKey("Id")
+                        .HasName("pk_categories");
+
+                    b.HasIndex("Name")
+                        .IsUnique()
+                        .HasDatabaseName("ix_categories_name");
+
+                    b.ToTable("categories", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("0193f0a0-0000-7000-8000-000000000001"),
+                            IsActive = true,
+                            Name = "Électronique"
+                        },
+                        new
+                        {
+                            Id = new Guid("0193f0a0-0000-7000-8000-000000000002"),
+                            IsActive = true,
+                            Name = "Maison et jardin"
+                        },
+                        new
+                        {
+                            Id = new Guid("0193f0a0-0000-7000-8000-000000000003"),
+                            IsActive = true,
+                            Name = "Vêtements et mode"
+                        },
+                        new
+                        {
+                            Id = new Guid("0193f0a0-0000-7000-8000-000000000004"),
+                            IsActive = true,
+                            Name = "Cours et soutien scolaire"
+                        },
+                        new
+                        {
+                            Id = new Guid("0193f0a0-0000-7000-8000-000000000005"),
+                            IsActive = true,
+                            Name = "Bricolage et réparation"
+                        },
+                        new
+                        {
+                            Id = new Guid("0193f0a0-0000-7000-8000-000000000006"),
+                            IsActive = true,
+                            Name = "Informatique"
+                        },
+                        new
+                        {
+                            Id = new Guid("0193f0a0-0000-7000-8000-000000000007"),
+                            IsActive = true,
+                            Name = "Transport et déménagement"
+                        },
+                        new
+                        {
+                            Id = new Guid("0193f0a0-0000-7000-8000-000000000008"),
+                            IsActive = true,
+                            Name = "Beauté et bien-être"
+                        },
+                        new
+                        {
+                            Id = new Guid("0193f0a0-0000-7000-8000-000000000009"),
+                            IsActive = true,
+                            Name = "Cuisine et alimentation"
+                        },
+                        new
+                        {
+                            Id = new Guid("0193f0a0-0000-7000-8000-00000000000a"),
+                            IsActive = true,
+                            Name = "Enfants et bébé"
+                        },
+                        new
+                        {
+                            Id = new Guid("0193f0a0-0000-7000-8000-00000000000b"),
+                            IsActive = true,
+                            Name = "Sport et loisirs"
+                        },
+                        new
+                        {
+                            Id = new Guid("0193f0a0-0000-7000-8000-00000000000c"),
+                            IsActive = true,
+                            Name = "Autres"
+                        });
+                });
+
+            modelBuilder.Entity("TradX.Domain.Listings.Listing", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Availability")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("availability");
+
+                    b.Property<Guid>("CategoryId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("category_id");
+
+                    b.Property<string>("City")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)")
+                        .HasColumnName("city");
+
+                    b.Property<string>("Condition")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("condition");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(3000)
+                        .HasColumnType("character varying(3000)")
+                        .HasColumnName("description");
+
+                    b.Property<string>("Direction")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("direction");
+
+                    b.Property<bool>("IsDonation")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_donation");
+
+                    b.Property<string>("Neighborhood")
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)")
+                        .HasColumnName("neighborhood");
+
+                    b.Property<Guid>("OwnerId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("owner_id");
+
+                    b.Property<DateTimeOffset?>("PublishedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("published_at");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(12)
+                        .HasColumnType("character varying(12)")
+                        .HasColumnName("status");
+
+                    b.Property<string>("StatusBeforeSuspension")
+                        .HasMaxLength(12)
+                        .HasColumnType("character varying(12)")
+                        .HasColumnName("status_before_suspension");
+
+                    b.Property<string>("SuspensionAppeal")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("suspension_appeal");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("title");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("type");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.Property<string>("WantedInReturn")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("wanted_in_return");
+
+                    b.HasKey("Id")
+                        .HasName("pk_listings");
+
+                    b.HasIndex("CategoryId")
+                        .HasDatabaseName("ix_listings_category_id");
+
+                    b.HasIndex("OwnerId", "Status")
+                        .HasDatabaseName("ix_listings_owner_id_status");
+
+                    b.HasIndex("Status", "PublishedAt")
+                        .HasDatabaseName("ix_listings_status_published_at");
+
+                    b.HasIndex("Status", "CategoryId", "PublishedAt")
+                        .HasDatabaseName("ix_listings_status_category_id_published_at");
+
+                    b.ToTable("listings", (string)null);
+                });
+
+            modelBuilder.Entity("TradX.Domain.Listings.ListingPhoto", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<int>("Height")
+                        .HasColumnType("integer")
+                        .HasColumnName("height");
+
+                    b.Property<Guid>("ListingId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("listing_id");
+
+                    b.Property<int>("Position")
+                        .HasColumnType("integer")
+                        .HasColumnName("position");
+
+                    b.Property<long>("SizeBytes")
+                        .HasColumnType("bigint")
+                        .HasColumnName("size_bytes");
+
+                    b.Property<string>("StorageKey")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("storage_key");
+
+                    b.Property<int>("Width")
+                        .HasColumnType("integer")
+                        .HasColumnName("width");
+
+                    b.HasKey("Id")
+                        .HasName("pk_listing_photos");
+
+                    b.HasIndex("ListingId", "Position")
+                        .HasDatabaseName("ix_listing_photos_listing_id_position");
+
+                    b.ToTable("listing_photos", (string)null);
+                });
+
             modelBuilder.Entity("TradX.Domain.Users.RefreshToken", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
@@ -137,7 +400,6 @@ namespace TradX.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("TradX.Domain.Users.User", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
@@ -246,6 +508,33 @@ namespace TradX.Infrastructure.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("TradX.Domain.Listings.Listing", b =>
+                {
+                    b.HasOne("TradX.Domain.Listings.Category", null)
+                        .WithMany()
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_listings_categories_category_id");
+
+                    b.HasOne("TradX.Domain.Users.User", null)
+                        .WithMany()
+                        .HasForeignKey("OwnerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_listings_users_owner_id");
+                });
+
+            modelBuilder.Entity("TradX.Domain.Listings.ListingPhoto", b =>
+                {
+                    b.HasOne("TradX.Domain.Listings.Listing", null)
+                        .WithMany("Photos")
+                        .HasForeignKey("ListingId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_listing_photos_listings_listing_id");
+                });
+
             modelBuilder.Entity("TradX.Domain.Users.RefreshToken", b =>
                 {
                     b.HasOne("TradX.Domain.Users.User", null)
@@ -254,6 +543,11 @@ namespace TradX.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_refresh_tokens_users_user_id");
+                });
+
+            modelBuilder.Entity("TradX.Domain.Listings.Listing", b =>
+                {
+                    b.Navigation("Photos");
                 });
 #pragma warning restore 612, 618
         }

@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using TradX.Application.Common;
 using TradX.Domain.Common;
+using TradX.Domain.Users;
 
 namespace TradX.Api.Security;
 
@@ -27,6 +28,16 @@ internal sealed class HttpCurrentUser(IHttpContextAccessor accessor) : ICurrentU
 
             var value = principal.FindFirstValue(UserIdClaim);
             return Guid.TryParse(value, out var id) ? id : null;
+        }
+    }
+
+    /// <inheritdoc />
+    public UserRole? Role
+    {
+        get
+        {
+            var value = accessor.HttpContext?.User.FindFirstValue("role");
+            return UserId is not null && Enum.TryParse<UserRole>(value, out var role) ? role : null;
         }
     }
 

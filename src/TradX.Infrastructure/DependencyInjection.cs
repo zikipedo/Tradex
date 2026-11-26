@@ -3,7 +3,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using TradX.Application.Auth;
 using TradX.Application.Common;
+using TradX.Application.Listings;
 using TradX.Infrastructure.Email;
+using TradX.Infrastructure.Files;
 using TradX.Infrastructure.Persistence;
 using TradX.Infrastructure.Security;
 
@@ -25,6 +27,7 @@ public static class DependencyInjection
         AddPersistence(services, configuration);
         AddSecurity(services, configuration);
         AddEmail(services, configuration);
+        AddFiles(services, configuration);
         services.AddSingleton(TimeProvider.System);
         return services;
     }
@@ -58,6 +61,13 @@ public static class DependencyInjection
         services.AddSingleton<IPasswordHasher, AspNetPasswordHasher>();
         services.AddSingleton<ISecureTokenGenerator, SecureTokenGenerator>();
         services.AddSingleton<IAccessTokenIssuer, JwtAccessTokenIssuer>();
+    }
+
+    private static void AddFiles(IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddOptions<StorageOptions>().Bind(configuration.GetSection(StorageOptions.SectionName));
+        services.AddSingleton<IFileStorage, LocalFileStorage>();
+        services.AddSingleton<IImageProcessor, SkiaImageProcessor>();
     }
 
     private static void AddEmail(IServiceCollection services, IConfiguration configuration)
