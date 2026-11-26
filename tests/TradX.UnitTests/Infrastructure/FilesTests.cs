@@ -104,6 +104,10 @@ public sealed class FilesTests
     [InlineData("../secret.txt")]
     [InlineData("listings/../../etc/passwd")]
     [InlineData("..\\..\\windows\\win.ini")]
+    [InlineData("listings\\photo.webp")]
+    [InlineData("/etc/passwd")]
+    [InlineData("C:/windows/win.ini")]
+    [InlineData("")]
     public void Local_storage_rejects_path_traversal(string key)
     {
         var storage = new LocalFileStorage(Options.Create(new StorageOptions { RootPath = Path.GetTempPath() + "tradx-root" }));
