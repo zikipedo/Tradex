@@ -59,6 +59,13 @@ internal sealed class LocalFileStorage(IOptions<StorageOptions> options) : IFile
     /// <exception cref="ArgumentException">Si la clé sort du dossier racine.</exception>
     internal string Resolve(string key)
     {
+        // Liste blanche de caractères : rejette « \ », « : » et tout séparateur propre à un système,
+        // pour que le comportement soit identique sous Windows et sous Linux.
+        if (string.IsNullOrEmpty(key) || !key.All(IsAllowedKeyChar) || key.StartsWith('/'))
+        {
+            throw new ArgumentException("Clé de fichier invalide.", nameof(key));
+        }
+
         var path = Path.GetFullPath(Path.Combine(_root, key));
         if (!path.StartsWith(_root + Path.DirectorySeparatorChar, StringComparison.Ordinal))
         {
@@ -67,4 +74,6 @@ internal sealed class LocalFileStorage(IOptions<StorageOptions> options) : IFile
 
         return path;
     }
+
+    private static bool IsAllowedKeyChar(char c) => char.IsAsciiLetterOrDigit(c) || c is '/' or '-' or '_' or '.';
 }
