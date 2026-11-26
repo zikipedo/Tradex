@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using TradX.Application.Common;
 using TradX.Domain.Audit;
+using TradX.Domain.Community;
 using TradX.Domain.Exchanges;
 using TradX.Domain.Listings;
 using TradX.Domain.Users;
@@ -35,6 +36,15 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
 
     /// <inheritdoc />
     public DbSet<TimeTransaction> TimeTransactions => Set<TimeTransaction>();
+
+    /// <inheritdoc />
+    public DbSet<Review> Reviews => Set<Review>();
+
+    /// <inheritdoc />
+    public DbSet<Report> Reports => Set<Report>();
+
+    /// <inheritdoc />
+    public DbSet<Message> Messages => Set<Message>();
 
     /// <inheritdoc />
     protected override void OnModelCreating(ModelBuilder modelBuilder)
