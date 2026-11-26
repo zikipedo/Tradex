@@ -24,6 +24,8 @@ public sealed class TradXApiFactory : WebApplicationFactory<Program>, IAsyncLife
         .WithDatabase("tradx_tests")
         .Build();
 
+    private readonly string _storageRoot = Path.Combine(Path.GetTempPath(), "tradx-it-" + Guid.NewGuid().ToString("N"));
+
     /// <summary>E-mails envoyés pendant les tests.</summary>
     public CapturingEmailSender Emails { get; } = new();
 
@@ -43,6 +45,10 @@ public sealed class TradXApiFactory : WebApplicationFactory<Program>, IAsyncLife
     {
         await base.DisposeAsync();
         await _postgres.DisposeAsync();
+        if (Directory.Exists(_storageRoot))
+        {
+            Directory.Delete(_storageRoot, recursive: true);
+        }
     }
 
     /// <summary>Exécute du code avec un <see cref="AppDbContext"/> neuf (vérifications directes en base).</summary>
@@ -63,6 +69,7 @@ public sealed class TradXApiFactory : WebApplicationFactory<Program>, IAsyncLife
         builder.UseSetting("Database:MigrateOnStartup", "true");
         builder.UseSetting("Cors:AllowedOrigins:0", "http://localhost:5173");
         builder.UseSetting("Jwt:SigningKey", TestSigningKey);
+        builder.UseSetting("Storage:RootPath", _storageRoot);
         // Limites très hautes pour les tests fonctionnels ; un test dédié vérifie la limitation.
         builder.UseSetting("RateLimiting:AuthPermitLimit", "100000");
         builder.UseSetting("RateLimiting:WritePermitLimit", "100000");
