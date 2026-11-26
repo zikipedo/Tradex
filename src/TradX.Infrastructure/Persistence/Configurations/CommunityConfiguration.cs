@@ -53,8 +53,8 @@ internal sealed class MessageConfiguration : IEntityTypeConfiguration<Message>
         builder.ToTable("messages");
         builder.HasKey(m => m.Id);
         builder.Property(m => m.Content).HasMaxLength(Message.MaxLength).IsRequired();
-        // Pagination par curseur : (échange, identifiant) couvre « les N messages avant X ».
-        builder.HasIndex(m => new { m.ExchangeId, m.Id });
+        // Pagination par curseur : (échange, date, identifiant) couvre « les N messages avant X ».
+        builder.HasIndex(m => new { m.ExchangeId, m.SentAt, m.Id });
         builder.HasIndex(m => new { m.RecipientId, m.ReadAt });
         builder.HasOne<Exchange>().WithMany().HasForeignKey(m => m.ExchangeId).OnDelete(DeleteBehavior.Cascade);
         builder.HasOne<User>().WithMany().HasForeignKey(m => m.SenderId).OnDelete(DeleteBehavior.Restrict);

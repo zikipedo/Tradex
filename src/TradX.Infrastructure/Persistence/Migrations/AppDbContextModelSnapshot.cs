@@ -112,11 +112,11 @@ namespace TradX.Infrastructure.Persistence.Migrations
                     b.HasIndex("SenderId")
                         .HasDatabaseName("ix_messages_sender_id");
 
-                    b.HasIndex("ExchangeId", "Id")
-                        .HasDatabaseName("ix_messages_exchange_id_id");
-
                     b.HasIndex("RecipientId", "ReadAt")
                         .HasDatabaseName("ix_messages_recipient_id_read_at");
+
+                    b.HasIndex("ExchangeId", "SentAt", "Id")
+                        .HasDatabaseName("ix_messages_exchange_id_sent_at_id");
 
                     b.ToTable("messages", (string)null);
                 });

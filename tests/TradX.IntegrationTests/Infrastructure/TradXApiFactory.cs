@@ -74,6 +74,7 @@ public sealed class TradXApiFactory : WebApplicationFactory<Program>, IAsyncLife
         // Limites très hautes pour les tests fonctionnels ; un test dédié vérifie la limitation.
         builder.UseSetting("RateLimiting:AuthPermitLimit", "100000");
         builder.UseSetting("RateLimiting:WritePermitLimit", "100000");
+        builder.UseSetting("RateLimiting:GlobalPermitLimit", "100000");
 
         builder.ConfigureTestServices(services =>
         {

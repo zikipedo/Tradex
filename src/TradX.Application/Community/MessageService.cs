@@ -24,7 +24,7 @@ public interface IMessageService
 }
 
 /// <summary>
-/// Implémentation de la messagerie. Seules les deux parties lisent et écrivent ;
+/// Implémentation de la messagerie (ordre : date d'envoi puis identifiant). Seules les deux parties lisent et écrivent ;
 /// un modérateur peut <b>lire</b> une conversation uniquement quand l'échange est en litige (preuves).
 /// </summary>
 internal sealed class MessageService(IAppDbContext db, ICurrentUser currentUser, TimeProvider clock) : IMessageService
@@ -52,11 +52,15 @@ internal sealed class MessageService(IAppDbContext db, ICurrentUser currentUser,
         var query = db.Messages.AsNoTracking().Where(m => m.ExchangeId == exchangeId);
         if (before is { } cursor)
         {
-            // Les GUID v7 sont ordonnés dans le temps : « plus ancien que le curseur » = identifiant plus petit.
-            query = query.Where(m => m.Id.CompareTo(cursor) < 0);
+            // Curseur stable : on reprend « avant » le message curseur selon l'ordre (date d'envoi, identifiant),
+            // ce qui reste correct même pour deux messages envoyés dans la même milliseconde.
+            var anchor = await db.Messages.AsNoTracking().Where(m => m.Id == cursor && m.ExchangeId == exchangeId)
+                .Select(m => new { m.SentAt, m.Id }).FirstOrDefaultAsync(ct)
+                ?? throw new NotFoundException("Message");
+            query = query.Where(m => m.SentAt < anchor.SentAt || (m.SentAt == anchor.SentAt && m.Id.CompareTo(anchor.Id) < 0));
         }
 
-        var items = await query.OrderByDescending(m => m.Id).Take(size + 1)
+        var items = await query.OrderByDescending(m => m.SentAt).ThenByDescending(m => m.Id).Take(size + 1)
             .Select(m => new MessageResponse(m.Id, m.SenderId, m.Content, m.SentAt, m.ReadAt))
             .ToListAsync(ct);
 

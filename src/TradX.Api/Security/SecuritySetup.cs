@@ -1,7 +1,9 @@
+using System.Net;
 using System.Security.Cryptography;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Options;
@@ -65,8 +67,40 @@ internal static class SecuritySetup
             .AddPolicy(Policies.Admin, p => p.RequireRole("Admin"));
 
         AddRateLimiting(services, configuration);
+        AddForwardedHeaders(services, configuration);
         return services;
     }
+
+    /// <summary>
+    /// Derrière un reverse proxy (Nginx, Caddy, équilibreur de charge), l'adresse du client arrive dans
+    /// <c>X-Forwarded-For</c>. On ne fait confiance à cet en-tête <b>que</b> s'il vient d'un proxy déclaré dans
+    /// <c>ForwardedHeaders:KnownProxies</c> : sinon un attaquant pourrait choisir son IP et contourner la limitation de débit.
+    /// Attention : avec une liste vide, ASP.NET Core ferait confiance à tout le monde ; le middleware n'est donc
+    /// activé que si au moins un proxy est déclaré (voir <see cref="HasTrustedProxies"/>).
+    /// </summary>
+    private static void AddForwardedHeaders(IServiceCollection services, IConfiguration configuration)
+    {
+        var proxies = TrustedProxies(configuration);
+        services.Configure<ForwardedHeadersOptions>(options =>
+        {
+            options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+            options.ForwardLimit = 1;
+            options.KnownProxies.Clear();
+            options.KnownIPNetworks.Clear();
+            foreach (var proxy in proxies)
+            {
+                options.KnownProxies.Add(IPAddress.Parse(proxy));
+            }
+        });
+    }
+
+    /// <summary>Vrai si au moins un reverse proxy de confiance est configuré.</summary>
+    /// <param name="configuration">Configuration.</param>
+    /// <returns>Vrai si <c>ForwardedHeaders:KnownProxies</c> n'est pas vide.</returns>
+    public static bool HasTrustedProxies(IConfiguration configuration) => TrustedProxies(configuration).Length > 0;
+
+    private static string[] TrustedProxies(IConfiguration configuration) =>
+        configuration.GetSection("ForwardedHeaders:KnownProxies").Get<string[]>() ?? [];
 
     private static void ConfigureBearer(JwtBearerOptions bearer, JwtOptions jwt)
     {
@@ -93,11 +127,19 @@ internal static class SecuritySetup
     {
         var authLimit = configuration.GetValue("RateLimiting:AuthPermitLimit", 10);
         var writeLimit = configuration.GetValue("RateLimiting:WritePermitLimit", 60);
+        var globalLimit = configuration.GetValue("RateLimiting:GlobalPermitLimit", 300);
 
         services.AddRateLimiter(options =>
         {
             options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
             options.OnRejected = WriteRejectionAsync;
+
+            // Limite globale par IP sur toutes les requêtes (recherche, photos…) : protège contre l'aspiration
+            // massive de données et le déni de service applicatif. S'ajoute aux limites spécifiques.
+            options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
+                RateLimitPartition.GetFixedWindowLimiter(
+                    context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                    _ => FixedWindow(globalLimit)));
 
             options.AddPolicy(RateLimitPolicies.Auth, context => RateLimitPartition.GetFixedWindowLimiter(
                 context.Connection.RemoteIpAddress?.ToString() ?? "unknown",

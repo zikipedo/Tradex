@@ -13,6 +13,12 @@ internal static class ApiPipelineExtensions
     /// <returns>Tâche asynchrone.</returns>
     public static async Task UseTradXPipelineAsync(this WebApplication app)
     {
+        // 0. Vraie adresse IP du client, uniquement si l'API est derrière un proxy de confiance déclaré.
+        if (SecuritySetup.HasTrustedProxies(app.Configuration))
+        {
+            app.UseForwardedHeaders();
+        }
+
         // 1. Identifiant de corrélation en premier : présent dans tous les logs, y compris ceux d'erreur.
         app.UseMiddleware<CorrelationIdMiddleware>();
 
