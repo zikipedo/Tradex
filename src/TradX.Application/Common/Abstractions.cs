@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using TradX.Domain.Audit;
+using TradX.Domain.Community;
 using TradX.Domain.Exchanges;
 using TradX.Domain.Listings;
 using TradX.Domain.Users;
@@ -33,6 +34,15 @@ public interface IAppDbContext
 
     /// <summary>Grand livre de la banque de temps (ajout uniquement).</summary>
     DbSet<TimeTransaction> TimeTransactions { get; }
+
+    /// <summary>Avis après échange.</summary>
+    DbSet<Review> Reviews { get; }
+
+    /// <summary>Signalements d'annonces.</summary>
+    DbSet<Report> Reports { get; }
+
+    /// <summary>Messages des conversations d'échange.</summary>
+    DbSet<Message> Messages { get; }
 
     /// <summary>Enregistre toutes les modifications en une seule transaction.</summary>
     /// <param name="cancellationToken">Jeton d'annulation.</param>
