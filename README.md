@@ -19,7 +19,10 @@ dotnet run --project src/TradX.Api        # API sur http://localhost:5191
 
 - Documentation interactive de l'API : **http://localhost:5191/scalar/v1** (développement uniquement).
 - Les migrations de la base sont appliquées automatiquement au démarrage en développement.
-- Les e-mails (confirmation, mot de passe oublié) sont écrits dans `src/TradX.Api/.mail-outbox/` en développement : ouvrez le fichier pour récupérer le lien.
+- **Mode démonstration (réglage par défaut du dépôt)** : aucun e-mail n'est envoyé (`Email:Mode = Disabled`) et la confirmation
+  d'adresse n'est pas exigée (`Auth:RequireEmailConfirmation = false`). Un compte est utilisable dès l'inscription ;
+  « mot de passe oublié » est masqué. Pour un vrai lancement : `Email:Mode = Smtp` et `Auth:RequireEmailConfirmation = true`.
+- En mode `File` (développement avec e-mails), ils sont écrits dans `src/TradX.Api/.mail-outbox/` : ouvrez le fichier pour récupérer le lien.
 - Premier administrateur : définir `Bootstrap__AdminEmail=votre@email` (variable d'environnement) puis redémarrer. Ce compte doit exister et avoir confirmé son e-mail.
 
 ---
@@ -179,7 +182,9 @@ Voir `.env.example`. En production, ces valeurs sont **obligatoires** et ne sont
 | `ConnectionStrings__TradX` | connexion PostgreSQL |
 | `Jwt__SigningKey` | clé de signature JWT (≥ 32 octets aléatoires) |
 | `Cors__AllowedOrigins__0` | adresse du front (le joker `*` est refusé en production) |
-| `Email__Mode=Smtp`, `Email__SmtpHost`, `Email__SmtpUser`, `Email__SmtpPassword`, `Email__From` | envoi des e-mails |
+| `Email__Mode` | `Disabled` (démonstration, aucun e-mail), `Smtp` (vrai envoi) ou `File` (développement) |
+| `Auth__RequireEmailConfirmation` | `false` en démonstration ; `true` pour un vrai lancement (exige `Email__Mode=Smtp`) |
+| `Email__SmtpHost`, `Email__SmtpUser`, `Email__SmtpPassword`, `Email__From` | envoi SMTP (seulement si `Email__Mode=Smtp`) |
 | `Auth__FrontendBaseUrl` | adresse du front pour les liens envoyés par e-mail |
 | `ForwardedHeaders__KnownProxies__0` | IP du reverse proxy, s'il y en a un |
 

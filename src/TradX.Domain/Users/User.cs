@@ -174,6 +174,18 @@ public sealed class User : Entity
         EmailConfirmationExpiresAt = null;
     }
 
+    /// <summary>
+    /// Considère l'e-mail comme confirmé <b>sans vérification</b>. Réservé au mode démonstration
+    /// (<c>Auth:RequireEmailConfirmation = false</c>), où aucun e-mail n'est envoyé : c'est un choix de configuration
+    /// explicite, jamais une conséquence d'une action de l'utilisateur.
+    /// </summary>
+    public void SkipEmailVerification()
+    {
+        EmailConfirmed = true;
+        EmailConfirmationTokenHash = null;
+        EmailConfirmationExpiresAt = null;
+    }
+
     /// <summary>Associe un jeton de réinitialisation du mot de passe (l'ancien devient invalide).</summary>
     /// <param name="tokenHash">Empreinte du jeton.</param>
     /// <param name="expiresAt">Expiration.</param>

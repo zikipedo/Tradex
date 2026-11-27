@@ -50,12 +50,29 @@ internal static class ApiServiceCollectionExtensions
         return services;
     }
 
-    /// <summary>En production, les e-mails doivent partir par SMTP (le mode fichier est réservé au développement).</summary>
-    private static void EnsureProductionEmailIsReal(IConfiguration configuration, IWebHostEnvironment environment)
+    /// <summary>
+    /// En production, les e-mails partent par SMTP, ou sont désactivés pour une démonstration.
+    /// Le mode fichier reste réservé au développement. Désactiver les e-mails n'est cohérent que si
+    /// la confirmation d'adresse n'est pas exigée (sinon personne ne pourrait confirmer son compte).
+    /// </summary>
+    internal static void EnsureProductionEmailIsReal(IConfiguration configuration, IWebHostEnvironment environment)
     {
-        if (environment.IsProduction() && !string.Equals(configuration["Email:Mode"], "Smtp", StringComparison.OrdinalIgnoreCase))
+        if (!environment.IsProduction())
         {
-            throw new InvalidOperationException("En production, Email:Mode doit valoir 'Smtp'.");
+            return;
+        }
+
+        var mode = configuration["Email:Mode"];
+        var disabled = string.Equals(mode, "Disabled", StringComparison.OrdinalIgnoreCase);
+        if (!disabled && !string.Equals(mode, "Smtp", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException("En production, Email:Mode doit valoir 'Smtp' ou 'Disabled'.");
+        }
+
+        if (disabled && configuration.GetValue("Auth:RequireEmailConfirmation", true))
+        {
+            throw new InvalidOperationException(
+                "Email:Mode 'Disabled' exige Auth:RequireEmailConfirmation = false : sans e-mail, personne ne pourrait confirmer son compte.");
         }
     }
 

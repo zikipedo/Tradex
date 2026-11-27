@@ -3,7 +3,8 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../auth/AuthContext'
 import { TextField } from '../../components/Field'
 import { safeRedirect } from '../../lib/safeRedirect'
-import { useAction } from '../../lib/useAsync'
+import { useAction, useResource } from '../../lib/useAsync'
+import { authApi } from '../../api/endpoints'
 import { AuthShell } from './AuthShell'
 
 /** Connexion par e-mail et mot de passe. Le message d'erreur ne dit jamais si l'e-mail existe. */
@@ -15,6 +16,9 @@ export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const { run, pending, error } = useAction(login)
+  // Sans envoi d'e-mails (démonstration), « mot de passe oublié » ne peut pas fonctionner : on ne le propose pas.
+  const settings = useResource(() => authApi.options(), [])
+  const passwordReset = settings.data?.passwordResetAvailable === true
 
   const onSubmit = async (event: FormEvent) => {
     event.preventDefault()
@@ -61,9 +65,11 @@ export default function LoginPage() {
           <button className="btn btn--action" type="submit" disabled={pending || !email || !password}>
             {pending ? 'Connexion…' : 'Se connecter'}
           </button>
-          <Link to="/mot-de-passe-oublie" className="auth__alt">
-            Mot de passe oublié ?
-          </Link>
+          {passwordReset && (
+            <Link to="/mot-de-passe-oublie" className="auth__alt">
+              Mot de passe oublié ?
+            </Link>
+          )}
         </div>
         <p className="auth__alt">
           Pas encore de compte ? <Link to="/inscription">Créer un compte</Link>

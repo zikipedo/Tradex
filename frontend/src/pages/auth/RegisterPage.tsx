@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { authApi } from '../../api/endpoints'
+import { useAuth } from '../../auth/AuthContext'
 import { DevMailNotice } from '../../components/DevMailNotice'
 import { TextField } from '../../components/Field'
 import { useAction } from '../../lib/useAsync'
@@ -9,13 +10,18 @@ import { AuthShell } from './AuthShell'
 const MIN_PASSWORD = 10
 
 /**
- * Inscription. L'API répond toujours la même chose, que l'e-mail soit déjà pris ou non
- * (protection contre l'énumération des comptes) : on affiche donc un message neutre.
+ * Inscription, suivie d'une connexion automatique.
+ * - Mode démonstration (aucun e-mail) : le compte est confirmé d'office, on arrive directement sur les annonces.
+ * - Mode protégé : le compte attend la confirmation par e-mail ; on l'explique.
+ * L'API répond la même chose que l'e-mail soit déjà pris ou non (pas d'énumération des comptes) : si la connexion
+ * échoue, le message reste neutre.
  */
 export default function RegisterPage() {
   const [form, setForm] = useState({ displayName: '', email: '', password: '', city: 'Bamako', neighborhood: '' })
   const [done, setDone] = useState<string | null>(null)
-  const { run, pending, error, fieldErrors } = useAction(authApi.register)
+  const { login } = useAuth()
+  const navigate = useNavigate()
+  const { run, pending, error, fieldErrors, setError } = useAction(authApi.register)
   const set = (key: keyof typeof form) => (e: { target: { value: string } }) => setForm({ ...form, [key]: e.target.value })
   const passwordTooShort = form.password.length > 0 && form.password.length < MIN_PASSWORD
 
@@ -28,7 +34,17 @@ export default function RegisterPage() {
       city: form.city.trim(),
       neighborhood: form.neighborhood.trim() || null,
     })
-    if (result) setDone(result.message)
+    if (!result) return
+    try {
+      const me = await login(form.email.trim(), form.password)
+      if (me.emailConfirmed) {
+        navigate('/annonces', { replace: true })
+        return
+      }
+      setDone(result.message)
+    } catch {
+      setError('Cette adresse a peut-être déjà un compte. Connecte-toi, ou choisis une autre adresse.')
+    }
   }
 
   return (

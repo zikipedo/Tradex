@@ -13,7 +13,13 @@ public sealed class EmailOptions
     /// <summary>Nom de la section de configuration.</summary>
     public const string SectionName = "Email";
 
-    /// <summary><c>File</c> (développement : fichiers locaux) ou <c>Smtp</c> (production).</summary>
+    /// <summary>Valeur de <see cref="Mode"/> qui désactive tout envoi (projet de démonstration).</summary>
+    public const string DisabledMode = "Disabled";
+
+    /// <summary>
+    /// <c>File</c> (développement : fichiers locaux), <c>Smtp</c> (production) ou <c>Disabled</c>
+    /// (démonstration : aucun e-mail, « mot de passe oublié » indisponible).
+    /// </summary>
     public string Mode { get; set; } = "File";
 
     /// <summary>Dossier des e-mails en mode fichier (ignoré par Git).</summary>
@@ -51,6 +57,24 @@ internal sealed class FileEmailSender(IOptions<EmailOptions> options) : IEmailSe
         var content = $"To: {message.To}\nSubject: {message.Subject}\n\n{message.Body}\n";
         await File.WriteAllTextAsync(Path.Combine(directory, fileName), content, Encoding.UTF8, cancellationToken);
     }
+}
+
+/// <summary>
+/// Mode démonstration (<c>Email:Mode = Disabled</c>) : aucun e-mail n'est envoyé ni écrit.
+/// Seul le sujet est journalisé, jamais l'adresse ni le contenu (qui peut contenir un lien secret).
+/// </summary>
+/// <param name="logger">Journal.</param>
+internal sealed partial class DisabledEmailSender(ILogger<DisabledEmailSender> logger) : IEmailSender
+{
+    /// <inheritdoc />
+    public Task SendAsync(EmailMessage message, CancellationToken cancellationToken)
+    {
+        LogSkipped(logger, message.Subject);
+        return Task.CompletedTask;
+    }
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Envoi d'e-mails désactivé : message « {Subject} » non envoyé.")]
+    private static partial void LogSkipped(ILogger logger, string subject);
 }
 
 /// <summary>Production : envoi SMTP chiffré (STARTTLS). Les identifiants viennent de l'environnement.</summary>

@@ -63,13 +63,26 @@ internal sealed class AuthService(
             // Même réponse ET même durée que pour une inscription réussie (le hachage coûte du temps) ;
             // le vrai titulaire est prévenu par e-mail.
             _ = hasher.Hash(request.Password);
-            await emails.SendAsync(AuthEmails.AccountAlreadyExists(email, _options.FrontendBaseUrl), ct);
+            if (_options.RequireEmailConfirmation)
+            {
+                await emails.SendAsync(AuthEmails.AccountAlreadyExists(email, _options.FrontendBaseUrl), ct);
+            }
+
             return;
         }
 
         var now = clock.GetUtcNow();
         var user = User.Register(email, request.DisplayName, hasher.Hash(request.Password), request.City, request.Neighborhood, now);
-        var rawToken = IssueEmailConfirmation(user, now);
+        string? rawToken = null;
+        if (_options.RequireEmailConfirmation)
+        {
+            rawToken = IssueEmailConfirmation(user, now);
+        }
+        else
+        {
+            user.SkipEmailVerification();
+        }
+
         db.Users.Add(user);
         audit.Record("auth.registered", nameof(User), user.Id, actorId: user.Id);
 
@@ -83,7 +96,10 @@ internal sealed class AuthService(
             return;
         }
 
-        await emails.SendAsync(AuthEmails.ConfirmEmail(email, _options.FrontendBaseUrl, rawToken), ct);
+        if (rawToken is not null)
+        {
+            await emails.SendAsync(AuthEmails.ConfirmEmail(email, _options.FrontendBaseUrl, rawToken), ct);
+        }
     }
 
     /// <inheritdoc />
@@ -103,7 +119,7 @@ internal sealed class AuthService(
     {
         var email = User.NormalizeEmail(request.Email);
         var user = await db.Users.FirstOrDefaultAsync(u => u.Email == email, ct);
-        if (user is null || user.EmailConfirmed)
+        if (!_options.RequireEmailConfirmation || user is null || user.EmailConfirmed)
         {
             return;
         }
@@ -143,6 +159,13 @@ internal sealed class AuthService(
             audit.Record("auth.login_failed", nameof(User), user.Id, actorId: user.Id);
             await db.SaveChangesAsync(ct);
             throw new AuthenticationFailedException(GenericLoginError);
+        }
+
+        if (!_options.RequireEmailConfirmation && !user.EmailConfirmed)
+        {
+            // Compte créé quand la confirmation était exigée : en mode démonstration, il devient utilisable.
+            user.SkipEmailVerification();
+            audit.Record("auth.email_verification_skipped", nameof(User), user.Id, actorId: user.Id);
         }
 
         if (check == PasswordCheck.SuccessRehashNeeded)

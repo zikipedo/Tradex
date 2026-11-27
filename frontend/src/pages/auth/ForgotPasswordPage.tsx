@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { authApi } from '../../api/endpoints'
 import { DevMailNotice } from '../../components/DevMailNotice'
 import { TextField } from '../../components/Field'
-import { useAction } from '../../lib/useAsync'
+import { useAction, useResource } from '../../lib/useAsync'
 import { AuthShell } from './AuthShell'
 
 /** Demande d'un lien de réinitialisation. Réponse identique que l'adresse existe ou non. */
@@ -11,6 +11,7 @@ export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('')
   const [done, setDone] = useState<string | null>(null)
   const { run, pending, error } = useAction(authApi.forgotPassword)
+  const settings = useResource(() => authApi.options(), [])
 
   const onSubmit = async (event: FormEvent) => {
     event.preventDefault()
@@ -27,7 +28,18 @@ export default function ForgotPasswordPage() {
         </>
       }
     >
-      {done ? (
+      {settings.data?.passwordResetAvailable === false ? (
+        <div className="auth__form" role="status">
+          <h1 className="h2">Pas disponible ici.</h1>
+          <p className="muted">
+            Cette version de démonstration n’envoie pas d’e-mails : le lien de réinitialisation ne peut pas être envoyé. Si tu as oublié
+            ton mot de passe, crée un nouveau compte.
+          </p>
+          <Link to="/inscription" className="btn btn--action">
+            Créer un compte
+          </Link>
+        </div>
+      ) : done ? (
         <div className="auth__form" role="status">
           <h1 className="h2">C’est envoyé.</h1>
           <p className="muted">{done}</p>

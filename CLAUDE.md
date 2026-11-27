@@ -39,7 +39,8 @@ Lancement : **Mali (Bamako)**, en **français**. Pas d'application mobile : web 
 - Statuts : `Draft → Published → Reserved → Exchanged`, plus `Archived` et `Suspended` (modération).
 - Recherche paginée : mot-clé, catégorie, type, sens, ville, quartier, don, tri par date.
 - Catégories : liste gérée par l'admin.
-- Pour publier ou proposer un échange, l'e-mail doit être **confirmé**.
+- Pour publier ou proposer un échange, l'e-mail doit être **confirmé**. En **mode démonstration** (`Auth:RequireEmailConfirmation = false`,
+  `Email:Mode = Disabled`, réglage actuel du dépôt), aucun e-mail n'est envoyé et les comptes sont confirmés d'office.
 
 ### 1.4 Cycle de vie d'un échange (machine à états, un seul endroit)
 ```text

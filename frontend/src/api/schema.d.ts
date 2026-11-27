@@ -4,6 +4,42 @@
  */
 
 export interface paths {
+    "/api/v1/auth/options": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Fonctions de compte disponibles (confirmation d'e-mail exigée, « mot de passe oublié » possible). */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AuthSettingsResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/register": {
         parameters: {
             query?: never;
@@ -1822,7 +1858,12 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Image WebP d'une photo (mêmes règles de visibilité que l'annonce). */
+        /**
+         * Image WebP d'une photo (mêmes règles de visibilité que l'annonce).
+         *     Une photo a une adresse unique et ne change jamais : celle d'une annonce publique peut être mise en cache
+         *     un jour (assez pour le réseau mobile, assez court pour qu'une suspension ne reste pas visible longtemps
+         *     dans les caches). Celle d'un brouillon ou d'une annonce suspendue n'est jamais mise en cache.
+         */
         get: {
             parameters: {
                 query?: never;
@@ -2258,6 +2299,16 @@ export interface components {
         AppealRequest: {
             /** @description Explication (10 à 1000 caractères). */
             message: string;
+        };
+        /**
+         * @description Fonctions de compte disponibles, pour que le site n'affiche pas ce qui ne peut pas marcher
+         *     (ex. « mot de passe oublié » quand aucun e-mail ne peut partir). Ne contient aucun secret.
+         */
+        AuthSettingsResponse: {
+            /** @description Faut-il confirmer son adresse avant de publier et d'échanger ? */
+            emailConfirmationRequired: boolean;
+            /** @description Le lien « mot de passe oublié » peut-il être envoyé ? */
+            passwordResetAvailable: boolean;
         };
         /** @description Catégorie renvoyée par l'API. */
         CategoryResponse: {
