@@ -196,6 +196,32 @@ public sealed class ListingEndpointsTests(TradXApiFactory factory)
     }
 
     [Fact]
+    public async Task Photo_cache_policy_follows_listing_visibility()
+    {
+        var alice = await factory.CreateMemberAsync();
+        var draft = await alice.CreateDraftAsync();
+        var photo = (await (await alice.Client.UploadPhotoAsync(draft.Id, ListingHelpers.Png()))
+            .Content.ReadFromJsonAsync<ListingPhotoResponse>(Json.Options))!;
+
+        // Brouillon : visible par l'auteur seulement, jamais mis en cache.
+        var draftPhoto = await alice.Client.GetAsync(photo.Url);
+        draftPhoto.Headers.CacheControl!.NoStore.ShouldBeTrue();
+        draftPhoto.Headers.CacheControl.Public.ShouldBeFalse();
+
+        // Publiée : adresse unique et immuable, cache public d'un jour.
+        await alice.Client.PostAsync($"/api/v1/listings/{draft.Id}/publish", null);
+        var publicPhoto = await _anonymous.GetAsync(photo.Url);
+        publicPhoto.Headers.CacheControl!.Public.ShouldBeTrue();
+        publicPhoto.Headers.CacheControl.MaxAge.ShouldBe(TimeSpan.FromDays(1));
+        publicPhoto.Headers.CacheControl.NoStore.ShouldBeFalse();
+        publicPhoto.Headers.GetValues("X-Content-Type-Options").ShouldContain("nosniff");
+
+        // Le reste de l'API (données JSON) n'est toujours jamais mis en cache.
+        (await _anonymous.GetAsync($"/api/v1/listings/{draft.Id}")).Headers.CacheControl!.NoStore.ShouldBeTrue();
+        (await alice.Client.GetAsync("/api/v1/users/me")).Headers.CacheControl!.NoStore.ShouldBeTrue();
+    }
+
+    [Fact]
     public async Task Fake_image_with_image_extension_is_rejected()
     {
         var alice = await factory.CreateMemberAsync();

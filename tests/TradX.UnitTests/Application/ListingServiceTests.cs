@@ -215,12 +215,27 @@ public sealed class ListingServiceTests : IAsyncLifetime
         var png = TestImages.Png();
         var photo = await PhotosAs(_alice).UploadAsync(listing.Id, new MemoryStream(png), png.Length, default);
 
-        await using (await PhotosAs(_alice).OpenAsync(listing.Id, photo.Id, default))
+        await using (var mine = await PhotosAs(_alice).OpenAsync(listing.Id, photo.Id, default))
         {
+            mine.IsPublic.ShouldBeFalse();
         }
 
         await Should.ThrowAsync<NotFoundException>(() => PhotosAs(_bob).OpenAsync(listing.Id, photo.Id, default));
         await Should.ThrowAsync<NotFoundException>(() => PhotosAs(null).OpenAsync(listing.Id, photo.Id, default));
+    }
+
+    [Fact]
+    public async Task Photo_of_a_published_listing_is_public_and_readable_by_anyone()
+    {
+        var listing = await As(_alice).CreateAsync(Request(), default);
+        var png = TestImages.Png();
+        var photo = await PhotosAs(_alice).UploadAsync(listing.Id, new MemoryStream(png), png.Length, default);
+        await As(_alice).PublishAsync(listing.Id, default);
+
+        await using var anonymous = await PhotosAs(null).OpenAsync(listing.Id, photo.Id, default);
+
+        anonymous.IsPublic.ShouldBeTrue();
+        anonymous.Content.ReadByte().ShouldBe('R'); // « RIFF » : en-tête WebP
     }
 
     [Theory]

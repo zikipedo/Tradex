@@ -50,7 +50,16 @@ public interface IListingPhotoService
     Task DeleteAsync(Guid listingId, Guid photoId, CancellationToken ct);
 
     /// <summary>Ouvre une photo, avec les mêmes règles de visibilité que l'annonce.</summary>
-    Task<Stream> OpenAsync(Guid listingId, Guid photoId, CancellationToken ct);
+    Task<PhotoContent> OpenAsync(Guid listingId, Guid photoId, CancellationToken ct);
+}
+
+/// <summary>Contenu d'une photo et sa visibilité (sert à choisir la politique de cache HTTP).</summary>
+/// <param name="Content">Image WebP. À libérer après usage.</param>
+/// <param name="IsPublic">Vrai si l'annonce est visible de tous (publiée ou réservée) ; faux pour un brouillon ou une annonce suspendue.</param>
+public sealed record PhotoContent(Stream Content, bool IsPublic) : IAsyncDisposable
+{
+    /// <inheritdoc />
+    public ValueTask DisposeAsync() => Content.DisposeAsync();
 }
 
 /// <summary>Implémentation des photos d'annonces.</summary>
@@ -108,7 +117,7 @@ internal sealed class ListingPhotoService(
     }
 
     /// <inheritdoc />
-    public async Task<Stream> OpenAsync(Guid listingId, Guid photoId, CancellationToken ct)
+    public async Task<PhotoContent> OpenAsync(Guid listingId, Guid photoId, CancellationToken ct)
     {
         var listing = await db.Listings.AsNoTracking().Include(l => l.Photos).FirstOrDefaultAsync(l => l.Id == listingId, ct);
         var visible = listing is not null
@@ -119,7 +128,8 @@ internal sealed class ListingPhotoService(
             throw new NotFoundException("Photo");
         }
 
-        return await storage.OpenReadAsync(photo.StorageKey, ct) ?? throw new NotFoundException("Photo");
+        var content = await storage.OpenReadAsync(photo.StorageKey, ct) ?? throw new NotFoundException("Photo");
+        return new PhotoContent(content, listing!.IsPubliclyVisible);
     }
 
     private static async Task<byte[]> ReadAllAsync(Stream content, CancellationToken ct)

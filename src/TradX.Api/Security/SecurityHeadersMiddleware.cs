@@ -29,8 +29,12 @@ internal sealed class SecurityHeadersMiddleware(RequestDelegate next)
                 headers["Content-Security-Policy"] = "default-src 'none'; frame-ancestors 'none'";
             }
 
-            // Les réponses de l'API peuvent contenir des données personnelles : pas de cache partagé.
-            headers.CacheControl = "no-store";
+            // Les réponses de l'API peuvent contenir des données personnelles : pas de cache, sauf si l'endpoint
+            // a choisi explicitement une autre politique (photos d'annonces publiques).
+            if (string.IsNullOrEmpty(headers.CacheControl))
+            {
+                headers.CacheControl = "no-store";
+            }
             return Task.CompletedTask;
         });
 
