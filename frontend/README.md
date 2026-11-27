@@ -53,10 +53,12 @@ exactement celles du domaine C# ; l'API reste l'autorité et refuse toute action
 
 ## Sécurité
 
-- **Jetons** : le JWT d'accès reste en mémoire ; le refresh token est dans `sessionStorage` (survit au rechargement, pas à
-  la fermeture de l'onglet, jamais partagé entre onglets). Évolution recommandée : cookie `HttpOnly` posé par l'API.
-- **Renouvellement unique** : plusieurs 401 simultanés ne déclenchent qu'un seul refresh (l'API révoque toute la famille
-  de jetons si un refresh token est réutilisé). Couvert par un test.
+- **Jetons** : le JWT d'accès reste en mémoire. Le refresh token est dans un cookie posé par l'API, `HttpOnly` (illisible
+  en JavaScript, donc hors de portée d'une faille XSS), `Secure`, `SameSite=Strict` (jamais envoyé depuis un autre site :
+  pas de CSRF) et limité au chemin `/api/v1/auth`. Le navigateur ne garde qu'un indice sans valeur (`tradx.session = 1`)
+  pour savoir s'il faut restaurer la session au chargement ; sa disparition déconnecte aussi les autres onglets.
+- **Renouvellement unique** : plusieurs 401 simultanés ne déclenchent qu'un seul refresh, dans l'onglet (promesse partagée)
+  et entre onglets (Web Locks), car l'API révoque toute la session si un refresh token est réutilisé. Couvert par des tests.
 - **XSS** : aucun HTML injecté (`dangerouslySetInnerHTML` absent), le texte des membres est toujours échappé par React.
 - **CSP** stricte ajoutée au build (`default-src 'self'`, pas de script externe) ; à doubler par un en-tête HTTP en production.
 - **Redirection ouverte** : la page de retour après connexion n'accepte que des chemins internes (`lib/safeRedirect.ts`).

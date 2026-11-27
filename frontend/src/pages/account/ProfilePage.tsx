@@ -115,8 +115,8 @@ export default function ProfilePage() {
               type="button"
               className="btn"
               onClick={async () => {
-                await logout()
                 navigate('/')
+                await logout()
               }}
             >
               Se déconnecter

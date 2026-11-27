@@ -21,7 +21,8 @@ export type UserRole = 'User' | 'Moderator' | 'Admin'
 /** Remplace les champs d'énumération et d'entier du schéma généré par leurs vrais types. */
 type Fix<T, Overrides> = Omit<T, keyof Overrides> & Overrides
 
-export type AuthTokens = Schemas['AuthTokensResponse']
+/** Session renvoyée par la connexion et le renouvellement : le refresh token est dans un cookie HttpOnly. */
+export type Session = Schemas['SessionResponse']
 export type Category = Schemas['CategoryResponse']
 export type ListingOwner = Schemas['ListingOwner']
 export type ListingPhoto = Fix<Schemas['ListingPhotoResponse'], { width: number; height: number }>
