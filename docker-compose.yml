@@ -6,6 +6,8 @@ services:
   postgres:
     image: postgres:17-alpine
     container_name: tradx-postgres
+    # Redémarre avec Docker Desktop : la base est prête quand on lance l'API depuis Visual Studio.
+    restart: unless-stopped
     environment:
       POSTGRES_DB: tradx
       POSTGRES_USER: tradx

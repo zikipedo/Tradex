@@ -488,3 +488,6 @@ coverage/
 
 # Secrets de production (docker-compose.prod.yml)
 .env.production
+
+# Site React construit dans l'API pour un lancement en un clic depuis Visual Studio (npm run build:api)
+src/TradX.Api/wwwroot/
