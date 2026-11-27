@@ -19,6 +19,7 @@ import type {
   Review,
   TimeAccount,
   UpdateProfile,
+  AuthSettings,
   Session,
   UpsertListing,
 } from './types'
@@ -26,6 +27,8 @@ import type {
 /** Appels de l'API TradX, regroupés par domaine. Un appel = une route documentée dans le README de l'API. */
 
 export const authApi = {
+  /** Fonctions de compte disponibles (ex. « mot de passe oublié » absent en démonstration). */
+  options: () => api<AuthSettings>('/auth/options'),
   register: (body: RegisterRequest) => api<{ message: string }>('/auth/register', { method: 'POST', body }),
   confirmEmail: (token: string) => api<void>('/auth/confirm-email', { method: 'POST', body: { token } }),
   resendConfirmation: (email: string) => api<{ message: string }>('/auth/resend-confirmation', { method: 'POST', body: { email } }),

@@ -23,6 +23,9 @@ type Fix<T, Overrides> = Omit<T, keyof Overrides> & Overrides
 
 /** Session renvoyée par la connexion et le renouvellement : le refresh token est dans un cookie HttpOnly. */
 export type Session = Schemas['SessionResponse']
+
+/** Fonctions de compte disponibles selon la configuration de l'API. */
+export type AuthSettings = Schemas['AuthSettingsResponse']
 export type Category = Schemas['CategoryResponse']
 export type ListingOwner = Schemas['ListingOwner']
 export type ListingPhoto = Fix<Schemas['ListingPhotoResponse'], { width: number; height: number }>
