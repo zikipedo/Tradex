@@ -134,7 +134,7 @@ Toutes les erreurs suivent le format **ProblemDetails** avec un `code` stable (e
 | A04 Conception | Machines à états centralisées, contraintes en base (soldes bornés, index uniques, grand livre et audit non modifiables par déclencheur) |
 | A05 Configuration | En-têtes de sécurité (CSP, X-Frame-Options, nosniff, HSTS hors dev), CORS en liste blanche, documentation Scalar en dev uniquement, aucune stacktrace renvoyée |
 | A06 Composants | `dotnet list package --vulnerable` dans la CI (0 vulnérabilité aujourd'hui), versions centralisées |
-| A07 Authentification | Verrouillage après 5 échecs, messages génériques (pas d'énumération des comptes, même durée de réponse), refresh token rotatif avec **détection de réutilisation**, `alg: none` refusé, limitation de débit |
+| A07 Authentification | Verrouillage après 5 échecs, messages génériques (pas d'énumération des comptes, même durée de réponse), refresh token rotatif avec **détection de réutilisation**, transporté dans un cookie `HttpOnly`, `Secure`, `SameSite=Strict` limité à `/api/v1/auth` (jamais dans le JSON), `alg: none` refusé, limitation de débit |
 | A08 Intégrité | Champs JSON inconnus refusés (pas d'affectation de masse), verrouillage optimiste (`xmin`) contre les modifications concurrentes |
 | A09 Journalisation | Journal d'audit **append-only** (connexions, rôles, échanges, temps, modération), logs JSON avec `CorrelationId`, aucun secret ni jeton dans les logs |
 | A10 SSRF | Aucune URL fournie par l'utilisateur n'est appelée par le serveur |

@@ -28,6 +28,7 @@ function renderProtected() {
 describe('RequireAuth', () => {
   beforeEach(() => {
     session.clear()
+    localStorage.clear()
     vi.stubGlobal('fetch', vi.fn())
   })
 
@@ -38,13 +39,13 @@ describe('RequireAuth', () => {
     expect(fetch).not.toHaveBeenCalled()
   })
 
-  it('restaure la session depuis le refresh token puis affiche la page', async () => {
-    sessionStorage.setItem('tradx.refresh', 'refresh-1')
+  it('restaure la session depuis le cookie puis affiche la page', async () => {
+    localStorage.setItem('tradx.session', '1')
     vi.mocked(fetch).mockImplementation(async (input) => {
       const url = String(input)
       if (url.endsWith('/auth/refresh'))
         return new Response(
-          JSON.stringify({ accessToken: 'a', accessTokenExpiresAt: '', refreshToken: 'refresh-2', refreshTokenExpiresAt: '' }),
+          JSON.stringify({ accessToken: 'a', accessTokenExpiresAt: '', refreshTokenExpiresAt: '' }),
           { status: 200 },
         )
       return new Response(
@@ -56,11 +57,11 @@ describe('RequireAuth', () => {
     expect(await screen.findByText('Mes échanges')).toBeInTheDocument()
   })
 
-  it('un refresh token révoqué renvoie vers la connexion et nettoie le stockage', async () => {
-    sessionStorage.setItem('tradx.refresh', 'refresh-vole')
+  it('une session révoquée renvoie vers la connexion et efface l’indice de session', async () => {
+    localStorage.setItem('tradx.session', '1')
     vi.mocked(fetch).mockResolvedValue(new Response('{}', { status: 401 }))
     renderProtected()
     expect(await screen.findByText('Page de connexion')).toBeInTheDocument()
-    expect(sessionStorage.getItem('tradx.refresh')).toBeNull()
+    expect(localStorage.getItem('tradx.session')).toBeNull()
   })
 })

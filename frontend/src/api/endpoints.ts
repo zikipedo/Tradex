@@ -1,6 +1,5 @@
 import { api } from './client'
 import type {
-  AuthTokens,
   Category,
   Exchange,
   ExchangeRoleFilter,
@@ -20,6 +19,7 @@ import type {
   Review,
   TimeAccount,
   UpdateProfile,
+  Session,
   UpsertListing,
 } from './types'
 
@@ -29,8 +29,7 @@ export const authApi = {
   register: (body: RegisterRequest) => api<{ message: string }>('/auth/register', { method: 'POST', body }),
   confirmEmail: (token: string) => api<void>('/auth/confirm-email', { method: 'POST', body: { token } }),
   resendConfirmation: (email: string) => api<{ message: string }>('/auth/resend-confirmation', { method: 'POST', body: { email } }),
-  login: (email: string, password: string) => api<AuthTokens>('/auth/login', { method: 'POST', body: { email, password } }),
-  logout: (refreshToken: string) => api<void>('/auth/logout', { method: 'POST', body: { refreshToken } }),
+  login: (email: string, password: string) => api<Session>('/auth/login', { method: 'POST', body: { email, password } }),
   forgotPassword: (email: string) => api<{ message: string }>('/auth/forgot-password', { method: 'POST', body: { email } }),
   resetPassword: (token: string, newPassword: string) =>
     api<void>('/auth/reset-password', { method: 'POST', body: { token, newPassword } }),

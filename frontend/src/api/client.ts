@@ -1,20 +1,21 @@
-import type { AuthTokens } from './types'
+import type { Session } from './types'
 
 /**
  * Client HTTP de l'API TradX.
  *
- * Sécurité des jetons :
+ * Sécurité de la session :
  * - le jeton d'accès (JWT, 15 min) reste **en mémoire** uniquement ;
- * - le refresh token est gardé dans `sessionStorage` : il survit à un rechargement de l'onglet
- *   mais disparaît à sa fermeture, et n'est jamais partagé entre onglets.
- *   (Évolution prévue : le déplacer dans un cookie HttpOnly posé par l'API.)
- * - le renouvellement est **unique à un instant donné** : l'API révoque toute la famille de jetons
- *   si un refresh token déjà utilisé est présenté, donc deux renouvellements en parallèle
- *   déconnecteraient l'utilisateur.
+ * - le refresh token est dans un cookie `HttpOnly`, `Secure`, `SameSite=Strict` posé par l'API :
+ *   aucun code JavaScript (ni une éventuelle faille XSS) ne peut le lire ;
+ * - le navigateur ne garde qu'un **indice** sans valeur (« une session existe ») pour savoir s'il faut
+ *   tenter de la restaurer au chargement, et pour que les autres onglets apprennent une déconnexion ;
+ * - le renouvellement est **unique à un instant donné**, dans l'onglet et entre onglets (Web Locks) :
+ *   le cookie est partagé, et l'API révoque toute la session si un refresh token déjà utilisé est présenté.
  */
 
 const API_BASE = '/api/v1'
-const REFRESH_KEY = 'tradx.refresh'
+const SESSION_HINT_KEY = 'tradx.session'
+const REFRESH_LOCK = 'tradx-refresh'
 
 /** Erreur renvoyée par l'API au format ProblemDetails (RFC 9457). */
 export class ApiError extends Error {
@@ -43,42 +44,42 @@ let accessToken: string | null = null
 let refreshInFlight: Promise<boolean> | null = null
 const listeners = new Set<Listener>()
 
-function readRefreshToken(): string | null {
+/** L'indice de session ne contient aucun secret : seulement « 1 ». */
+function hasSessionHint(): boolean {
   try {
-    return sessionStorage.getItem(REFRESH_KEY)
+    return localStorage.getItem(SESSION_HINT_KEY) === '1'
   } catch {
-    return null
+    return false
   }
 }
 
-function writeRefreshToken(value: string | null): void {
+function setSessionHint(active: boolean): void {
   try {
-    if (value) sessionStorage.setItem(REFRESH_KEY, value)
-    else sessionStorage.removeItem(REFRESH_KEY)
+    if (active) localStorage.setItem(SESSION_HINT_KEY, '1')
+    else localStorage.removeItem(SESSION_HINT_KEY)
   } catch {
-    // Stockage indisponible (navigation privée stricte) : la session restera limitée à la mémoire.
+    // Stockage indisponible (navigation privée stricte) : la session reste limitée à cet onglet.
   }
 }
 
 /** Gestion de la session côté navigateur. */
 export const session = {
-  /** Enregistre les jetons reçus après connexion ou renouvellement. */
-  store(tokens: AuthTokens): void {
+  /** Enregistre le jeton d'accès reçu après connexion ou renouvellement. */
+  store(tokens: Session): void {
     accessToken = tokens.accessToken
-    writeRefreshToken(tokens.refreshToken)
+    setSessionHint(true)
     listeners.forEach((l) => l(true))
   },
-  /** Oublie tous les jetons (déconnexion ou session révoquée). */
+  /** Oublie le jeton d'accès (déconnexion ou session révoquée). Le cookie est effacé par l'API. */
   clear(): void {
     accessToken = null
-    writeRefreshToken(null)
+    setSessionHint(false)
     listeners.forEach((l) => l(false))
   },
-  /** Vrai si une session existe ou peut être restaurée. */
+  /** Vrai si une session existe ou peut être restaurée depuis le cookie. */
   canResume(): boolean {
-    return accessToken !== null || readRefreshToken() !== null
+    return accessToken !== null || hasSessionHint()
   },
-  refreshToken: readRefreshToken,
   /** S'abonne aux changements de connexion ; renvoie la fonction de désabonnement. */
   subscribe(listener: Listener): () => void {
     listeners.add(listener)
@@ -86,30 +87,52 @@ export const session = {
   },
 }
 
-/** Renouvelle les jetons une seule fois même si plusieurs requêtes échouent en même temps. */
+// Déconnexion dans un autre onglet : l'indice disparaît, on oublie aussi le jeton d'accès ici.
+if (typeof window !== 'undefined') {
+  window.addEventListener('storage', (event) => {
+    if (event.key === SESSION_HINT_KEY && event.newValue === null && accessToken !== null) {
+      accessToken = null
+      listeners.forEach((l) => l(false))
+    }
+  })
+}
+
+/** Exécute `task` sous un verrou partagé entre onglets quand le navigateur le permet. */
+function withCrossTabLock<T>(task: () => Promise<T>): Promise<T> {
+  const locks = typeof navigator !== 'undefined' ? navigator.locks : undefined
+  return locks ? locks.request(REFRESH_LOCK, task) : task()
+}
+
+/**
+ * Renouvelle la session à partir du cookie. Un seul renouvellement à la fois dans l'onglet
+ * (promesse partagée) et entre onglets (verrou) : le suivant lit le cookie déjà renouvelé.
+ */
 export function refreshSession(): Promise<boolean> {
-  refreshInFlight ??= (async () => {
-    const refreshToken = readRefreshToken()
-    if (!refreshToken) return false
+  refreshInFlight ??= withCrossTabLock(async () => {
     try {
-      const response = await fetch(`${API_BASE}/auth/refresh`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ refreshToken }),
-      })
+      const response = await fetch(`${API_BASE}/auth/refresh`, { method: 'POST', credentials: 'same-origin' })
       if (!response.ok) {
-        session.clear()
+        if (response.status === 401) session.clear()
         return false
       }
-      session.store((await response.json()) as AuthTokens)
+      session.store((await response.json()) as Session)
       return true
     } catch {
       return false
-    } finally {
-      refreshInFlight = null
     }
-  })()
+  }).finally(() => {
+    refreshInFlight = null
+  })
   return refreshInFlight
+}
+
+/** Déconnexion : l'API révoque la session et efface le cookie ; on oublie le jeton dans tous les cas. */
+export async function endSession(): Promise<void> {
+  try {
+    await fetch(`${API_BASE}/auth/logout`, { method: 'POST', credentials: 'same-origin' })
+  } finally {
+    session.clear()
+  }
 }
 
 async function toApiError(response: Response): Promise<ApiError> {
@@ -166,7 +189,7 @@ export async function fetchProtectedImage(url: string, signal?: AbortSignal): Pr
   if (!url.startsWith(`${API_BASE}/`)) throw new ApiError(400, 'Adresse d’image inattendue.')
   const get = () => fetch(url, { headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {}, signal })
   let response = await get()
-  if (response.status === 401 && readRefreshToken() && (await refreshSession())) response = await get()
+  if (response.status === 401 && hasSessionHint() && (await refreshSession())) response = await get()
   if (!response.ok) throw await toApiError(response)
   return response.blob()
 }
@@ -177,7 +200,7 @@ export async function fetchProtectedImage(url: string, signal?: AbortSignal): Pr
  */
 export async function api<T>(path: string, options: RequestOptions = {}): Promise<T> {
   let response = await send(path, options)
-  if (response.status === 401 && readRefreshToken() && (await refreshSession())) {
+  if (response.status === 401 && hasSessionHint() && (await refreshSession())) {
     response = await send(path, options)
   }
   if (!response.ok) throw await toApiError(response)

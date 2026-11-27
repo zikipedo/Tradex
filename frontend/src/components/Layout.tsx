@@ -35,9 +35,10 @@ export function Layout() {
     return () => window.removeEventListener('keydown', onKey)
   }, [menuOpen])
 
+  // On quitte d'abord la page (elle peut être réservée aux membres), puis on ferme la session.
   const onLogout = async () => {
-    await logout()
     navigate('/')
+    await logout()
   }
 
   const links = (

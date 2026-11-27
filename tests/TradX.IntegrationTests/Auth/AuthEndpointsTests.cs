@@ -33,14 +33,14 @@ public sealed class AuthEndpointsTests(TradXApiFactory factory)
         me.EmailConfirmed.ShouldBeTrue();
         me.Role.ShouldBe(UserRole.User);
 
-        var refreshed = await _anonymous.PostAsJsonAsync("/api/v1/auth/refresh", new RefreshRequest(tokens.RefreshToken));
+        var refreshed = await SessionCookie.PostAsync(_anonymous, "/api/v1/auth/refresh", tokens.RefreshToken);
         refreshed.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var newTokens = await refreshed.Content.ReadFromJsonAsync<AuthTokensResponse>(Json.Options);
+        var newRefreshToken = SessionCookie.ReadToken(refreshed);
+        newRefreshToken.ShouldNotBeNull();
+        newRefreshToken.ShouldNotBe(tokens.RefreshToken);
 
-        (await _anonymous.PostAsJsonAsync("/api/v1/auth/logout", new RefreshRequest(newTokens!.RefreshToken)))
-            .StatusCode.ShouldBe(HttpStatusCode.NoContent);
-        (await _anonymous.PostAsJsonAsync("/api/v1/auth/refresh", new RefreshRequest(newTokens.RefreshToken)))
-            .StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+        (await SessionCookie.PostAsync(_anonymous, "/api/v1/auth/logout", newRefreshToken)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+        (await SessionCookie.PostAsync(_anonymous, "/api/v1/auth/refresh", newRefreshToken)).StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
     }
 
     [Fact]
@@ -115,13 +115,11 @@ public sealed class AuthEndpointsTests(TradXApiFactory factory)
     public async Task Reused_refresh_token_revokes_the_whole_session_family()
     {
         var member = await factory.CreateMemberAsync();
-        var rotated = await (await _anonymous.PostAsJsonAsync("/api/v1/auth/refresh", new RefreshRequest(member.Tokens.RefreshToken)))
-            .Content.ReadFromJsonAsync<AuthTokensResponse>(Json.Options);
+        var rotated = SessionCookie.ReadToken(await SessionCookie.PostAsync(_anonymous, "/api/v1/auth/refresh", member.Tokens.RefreshToken));
+        rotated.ShouldNotBeNull();
 
-        (await _anonymous.PostAsJsonAsync("/api/v1/auth/refresh", new RefreshRequest(member.Tokens.RefreshToken)))
-            .StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
-        (await _anonymous.PostAsJsonAsync("/api/v1/auth/refresh", new RefreshRequest(rotated!.RefreshToken)))
-            .StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+        (await SessionCookie.PostAsync(_anonymous, "/api/v1/auth/refresh", member.Tokens.RefreshToken)).StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+        (await SessionCookie.PostAsync(_anonymous, "/api/v1/auth/refresh", rotated)).StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
     }
 
     [Fact]
@@ -252,4 +250,60 @@ public sealed class AuthEndpointsTests(TradXApiFactory factory)
         SigningCredentials = new SigningCredentials(
             new SymmetricSecurityKey(Encoding.UTF8.GetBytes(TradXApiFactory.TestSigningKey)), SecurityAlgorithms.HmacSha256),
     });
+
+    [Fact]
+    public async Task Login_puts_the_refresh_token_only_in_a_hardened_cookie()
+    {
+        var member = await factory.CreateMemberAsync();
+        var response = await _anonymous.PostAsJsonAsync("/api/v1/auth/login", new LoginRequest(member.Email, TestUsers.Password));
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var body = await response.Content.ReadAsStringAsync();
+        body.ShouldContain("accessToken");
+        body.ShouldNotContain("\"refreshToken\"");
+        var cookie = SessionCookie.SetCookieHeader(response)!.ToLowerInvariant();
+        cookie.ShouldContain("httponly");
+        cookie.ShouldContain("secure");
+        cookie.ShouldContain("samesite=strict");
+        cookie.ShouldContain("path=/api/v1/auth");
+        cookie.ShouldContain("expires=");
+        body.ShouldNotContain(SessionCookie.ReadToken(response)!);
+    }
+
+    [Fact]
+    public async Task Refresh_without_cookie_is_rejected_even_with_a_token_in_the_body()
+    {
+        var member = await factory.CreateMemberAsync();
+
+        (await SessionCookie.PostAsync(_anonymous, "/api/v1/auth/refresh", null)).StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+        // L'ancien contrat (jeton dans le corps JSON) n'est plus accepté : seul le cookie fait foi.
+        (await _anonymous.PostAsJsonAsync("/api/v1/auth/refresh", new RefreshRequest(member.Tokens.RefreshToken)))
+            .StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+        (await SessionCookie.PostAsync(_anonymous, "/api/v1/auth/refresh", member.Tokens.RefreshToken)).StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task Invalid_cookie_is_rejected_and_erased()
+    {
+        var response = await SessionCookie.PostAsync(_anonymous, "/api/v1/auth/refresh", "jeton-invente-par-un-attaquant");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+        var cleared = SessionCookie.SetCookieHeader(response);
+        cleared.ShouldNotBeNull();
+        SessionCookie.ReadToken(response).ShouldBeNull();
+        cleared.ToLowerInvariant().ShouldContain("expires=thu, 01 jan 1970");
+    }
+
+    [Fact]
+    public async Task Logout_revokes_the_session_and_erases_the_cookie_and_is_harmless_without_cookie()
+    {
+        var member = await factory.CreateMemberAsync();
+
+        var logout = await SessionCookie.PostAsync(_anonymous, "/api/v1/auth/logout", member.Tokens.RefreshToken);
+        logout.StatusCode.ShouldBe(HttpStatusCode.NoContent);
+        SessionCookie.ReadToken(logout).ShouldBeNull();
+        (await SessionCookie.PostAsync(_anonymous, "/api/v1/auth/refresh", member.Tokens.RefreshToken)).StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+
+        (await SessionCookie.PostAsync(_anonymous, "/api/v1/auth/logout", null)).StatusCode.ShouldBe(HttpStatusCode.NoContent);
+    }
 }

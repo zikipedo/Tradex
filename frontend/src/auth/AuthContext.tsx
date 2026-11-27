@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { refreshSession, session } from '../api/client'
+import { endSession, refreshSession, session } from '../api/client'
 import { authApi, usersApi } from '../api/endpoints'
 import type { MyProfile } from '../api/types'
 
@@ -55,14 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [loadMe],
   )
 
-  const logout = useCallback(async () => {
-    const token = session.refreshToken()
-    try {
-      if (token) await authApi.logout(token)
-    } finally {
-      session.clear()
-    }
-  }, [])
+  const logout = useCallback(() => endSession(), [])
 
   const reloadMe = useCallback(async () => {
     if (status === 'member') await loadMe()

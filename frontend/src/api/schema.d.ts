@@ -169,7 +169,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Connexion : renvoie un JWT (15 min) et un refresh token (7 jours, usage unique). */
+        /**
+         * Connexion : renvoie un JWT (15 min) dans le corps, et pose le refresh token (7 jours, usage unique)
+         *     dans un cookie `HttpOnly`, `Secure`, `SameSite=Strict`.
+         */
         post: {
             parameters: {
                 query?: never;
@@ -191,7 +194,7 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["AuthTokensResponse"];
+                        "application/json": components["schemas"]["SessionResponse"];
                     };
                 };
                 /** @description Unauthorized */
@@ -220,7 +223,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Renouvelle les jetons. L'ancien refresh token devient inutilisable. */
+        /**
+         * Renouvelle la session à partir du cookie : nouveau JWT, et nouveau refresh token dans le cookie.
+         *     L'ancien devient inutilisable ; s'il est présenté à nouveau, toute la session est révoquée.
+         */
         post: {
             parameters: {
                 query?: never;
@@ -228,13 +234,7 @@ export interface paths {
                 path?: never;
                 cookie?: never;
             };
-            requestBody: {
-                content: {
-                    "application/json": components["schemas"]["RefreshRequest"];
-                    "text/json": components["schemas"]["RefreshRequest"];
-                    "application/*+json": components["schemas"]["RefreshRequest"];
-                };
-            };
+            requestBody?: never;
             responses: {
                 /** @description OK */
                 200: {
@@ -242,7 +242,7 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["AuthTokensResponse"];
+                        "application/json": components["schemas"]["SessionResponse"];
                     };
                 };
                 /** @description Unauthorized */
@@ -271,7 +271,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Déconnexion : révoque la session liée au refresh token. */
+        /** Déconnexion : révoque la session liée au cookie et l'efface. Sans cookie, ne fait rien. */
         post: {
             parameters: {
                 query?: never;
@@ -279,13 +279,7 @@ export interface paths {
                 path?: never;
                 cookie?: never;
             };
-            requestBody: {
-                content: {
-                    "application/json": components["schemas"]["RefreshRequest"];
-                    "text/json": components["schemas"]["RefreshRequest"];
-                    "application/*+json": components["schemas"]["RefreshRequest"];
-                };
-            };
+            requestBody?: never;
             responses: {
                 /** @description No Content */
                 204: {
@@ -2265,23 +2259,6 @@ export interface components {
             /** @description Explication (10 à 1000 caractères). */
             message: string;
         };
-        /** @description Jetons renvoyés après connexion ou renouvellement. */
-        AuthTokensResponse: {
-            /** @description JWT à envoyer dans l'en-tête `Authorization: Bearer`. */
-            accessToken: string;
-            /**
-             * Format: date-time
-             * @description Expiration du JWT.
-             */
-            accessTokenExpiresAt: string;
-            /** @description Jeton opaque pour obtenir un nouveau JWT (à usage unique). */
-            refreshToken: string;
-            /**
-             * Format: date-time
-             * @description Expiration du refresh token.
-             */
-            refreshTokenExpiresAt: string;
-        };
         /** @description Catégorie renvoyée par l'API. */
         CategoryResponse: {
             /**
@@ -2801,11 +2778,6 @@ export interface components {
              */
             completedExchanges: number | string;
         };
-        /** @description Demande de renouvellement des jetons. */
-        RefreshRequest: {
-            /** @description Refresh token reçu à la connexion ou au dernier renouvellement. */
-            refreshToken: string;
-        };
         /** @description Demande d'inscription. */
         RegisterRequest: {
             /** @description Adresse e-mail. */
@@ -2930,6 +2902,24 @@ export interface components {
         SendMessageRequest: {
             /** @description Texte (1 à 2000 caractères). */
             content: string;
+        };
+        /**
+         * @description Réponse de connexion et de renouvellement vue par le navigateur.
+         *     Le refresh token n'y figure pas : il est dans un cookie `HttpOnly` (voir RefreshCookie).
+         */
+        SessionResponse: {
+            /** @description JWT à envoyer dans l'en-tête `Authorization: Bearer`. */
+            accessToken: string;
+            /**
+             * Format: date-time
+             * @description Expiration du JWT.
+             */
+            accessTokenExpiresAt: string;
+            /**
+             * Format: date-time
+             * @description Expiration de la session (refresh token).
+             */
+            refreshTokenExpiresAt: string;
         };
         /** Format: binary */
         Stream: string;
