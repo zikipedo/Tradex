@@ -70,7 +70,7 @@ Proposed → Expired (sans réponse après 7 jours)
 ## 3. Stack technique
 - **.NET 10 (LTS)**, **C#**, **ASP.NET Core Web API** (contrôleurs), `Nullable` activé, avertissements traités comme erreurs.
 - **PostgreSQL 17** (Docker) + **EF Core 10** (Npgsql) + **migrations EF Core**.
-- Authentification : **JWT** (accès 15 min) + **refresh token rotatif** (7 jours, haché en base, réutilisation = révocation de la famille). Mots de passe : `PasswordHasher<T>` d'ASP.NET Core Identity (PBKDF2, jamais de hash maison).
+- Authentification : **JWT** (accès 15 min) + **refresh token rotatif** (7 jours, haché en base, réutilisation = révocation de la famille), transmis **uniquement** dans un cookie `HttpOnly`, `Secure`, `SameSite=Strict`, chemin `/api/v1/auth`. Mots de passe : `PasswordHasher<T>` d'ASP.NET Core Identity (PBKDF2, jamais de hash maison).
 - Validation : **FluentValidation**. Erreurs : **ProblemDetails (RFC 9457)** via un seul `IExceptionHandler`.
 - Limitation de débit : `Microsoft.AspNetCore.RateLimiting` (intégré).
 - Images : **SkiaSharp** (MIT) pour vérifier, réencoder en WebP et supprimer les métadonnées.

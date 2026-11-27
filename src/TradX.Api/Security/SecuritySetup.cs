@@ -68,6 +68,8 @@ internal static class SecuritySetup
 
         AddRateLimiting(services, configuration);
         AddForwardedHeaders(services, configuration);
+        services.Configure<RefreshCookieOptions>(configuration.GetSection(RefreshCookieOptions.SectionName));
+        services.AddSingleton<RefreshCookie>();
         return services;
     }
 

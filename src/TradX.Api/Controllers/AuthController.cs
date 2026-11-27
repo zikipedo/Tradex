@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using TradX.Api.Errors;
 using TradX.Api.Security;
 using TradX.Application.Auth;
+using TradX.Domain.Common;
 
 namespace TradX.Api.Controllers;
 
@@ -11,12 +13,14 @@ namespace TradX.Api.Controllers;
 /// Aucun traitement métier ici : tout est délégué à <see cref="IAuthService"/>.
 /// </summary>
 /// <param name="auth">Service d'authentification.</param>
+/// <param name="cookie">Cookie qui transporte le refresh token.</param>
+/// <param name="problems">Écriture des erreurs au format ProblemDetails.</param>
 [ApiController]
 [Route("api/v1/auth")]
 [AllowAnonymous]
 [EnableRateLimiting(RateLimitPolicies.Auth)]
 [Produces("application/json")]
-public sealed class AuthController(IAuthService auth) : ControllerBase
+public sealed class AuthController(IAuthService auth, RefreshCookie cookie, IProblemDetailsService problems) : ControllerBase
 {
     private const string GenericEmailMessage =
         "Si cette adresse peut être utilisée, un e-mail vient d'y être envoyé. Pensez à vérifier vos spams.";
@@ -55,27 +59,66 @@ public sealed class AuthController(IAuthService auth) : ControllerBase
         return Accepted(new AcceptedResponse(GenericEmailMessage));
     }
 
-    /// <summary>Connexion : renvoie un JWT (15 min) et un refresh token (7 jours, usage unique).</summary>
+    /// <summary>
+    /// Connexion : renvoie un JWT (15 min) dans le corps, et pose le refresh token (7 jours, usage unique)
+    /// dans un cookie <c>HttpOnly</c>, <c>Secure</c>, <c>SameSite=Strict</c>.
+    /// </summary>
     [HttpPost("login")]
     [EndpointSummary("Connexion")]
-    [ProducesResponseType<AuthTokensResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<SessionResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
-    public Task<AuthTokensResponse> Login(LoginRequest request, CancellationToken ct) => auth.LoginAsync(request, ct);
+    public async Task<SessionResponse> Login(LoginRequest request, CancellationToken ct)
+    {
+        var tokens = await auth.LoginAsync(request, ct);
+        cookie.Write(Response, tokens.RefreshToken, tokens.RefreshTokenExpiresAt);
+        return SessionResponse.From(tokens);
+    }
 
-    /// <summary>Renouvelle les jetons. L'ancien refresh token devient inutilisable.</summary>
+    /// <summary>
+    /// Renouvelle la session à partir du cookie : nouveau JWT, et nouveau refresh token dans le cookie.
+    /// L'ancien devient inutilisable ; s'il est présenté à nouveau, toute la session est révoquée.
+    /// </summary>
     [HttpPost("refresh")]
-    [EndpointSummary("Renouvellement des jetons")]
-    [ProducesResponseType<AuthTokensResponse>(StatusCodes.Status200OK)]
+    [EndpointSummary("Renouvellement de la session")]
+    [ProducesResponseType<SessionResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
-    public Task<AuthTokensResponse> Refresh(RefreshRequest request, CancellationToken ct) => auth.RefreshAsync(request, ct);
+    public async Task<ActionResult<SessionResponse>> Refresh(CancellationToken ct)
+    {
+        try
+        {
+            var token = cookie.Read(Request) ?? throw new AuthenticationFailedException("Session expirée. Reconnectez-vous.");
+            var tokens = await auth.RefreshAsync(new RefreshRequest(token), ct);
+            cookie.Write(Response, tokens.RefreshToken, tokens.RefreshTokenExpiresAt);
+            return SessionResponse.From(tokens);
+        }
+        catch (AuthenticationFailedException e)
+        {
+            // Jeton absent, expiré, révoqué ou réutilisé : on efface aussi le cookie côté navigateur.
+            // La réponse est écrite ici et non par le gestionnaire global, qui effacerait l'en-tête Set-Cookie.
+            cookie.Clear(Response);
+            Response.StatusCode = StatusCodes.Status401Unauthorized;
+            await problems.WriteAsync(new ProblemDetailsContext
+            {
+                HttpContext = HttpContext,
+                ProblemDetails = GlobalExceptionHandler.ToProblemDetails(e),
+                Exception = e,
+            });
+            return new EmptyResult();
+        }
+    }
 
-    /// <summary>Déconnexion : révoque la session liée au refresh token.</summary>
+    /// <summary>Déconnexion : révoque la session liée au cookie et l'efface. Sans cookie, ne fait rien.</summary>
     [HttpPost("logout")]
     [EndpointSummary("Déconnexion")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    public async Task<IActionResult> Logout(RefreshRequest request, CancellationToken ct)
+    public async Task<IActionResult> Logout(CancellationToken ct)
     {
-        await auth.LogoutAsync(request, ct);
+        if (cookie.Read(Request) is { } token)
+        {
+            await auth.LogoutAsync(new RefreshRequest(token), ct);
+        }
+
+        cookie.Clear(Response);
         return NoContent();
     }
 
