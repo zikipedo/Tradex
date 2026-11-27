@@ -127,14 +127,26 @@ public sealed class ListingsController(IListingService listings, IListingPhotoSe
         return NoContent();
     }
 
-    /// <summary>Image WebP d'une photo (mêmes règles de visibilité que l'annonce).</summary>
+    /// <summary>
+    /// Image WebP d'une photo (mêmes règles de visibilité que l'annonce).
+    /// Une photo a une adresse unique et ne change jamais : celle d'une annonce publique peut être mise en cache
+    /// un jour (assez pour le réseau mobile, assez court pour qu'une suspension ne reste pas visible longtemps
+    /// dans les caches). Celle d'un brouillon ou d'une annonce suspendue n'est jamais mise en cache.
+    /// </summary>
     [HttpGet("{id:guid}/photos/{photoId:guid}")]
     [AllowAnonymous]
     [EndpointSummary("Télécharger une photo")]
     [ProducesResponseType<FileStreamResult>(StatusCodes.Status200OK, "image/webp")]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetPhoto(Guid id, Guid photoId, CancellationToken ct) =>
-        File(await photos.OpenAsync(id, photoId, ct), "image/webp");
+    public async Task<IActionResult> GetPhoto(Guid id, Guid photoId, CancellationToken ct)
+    {
+        var photo = await photos.OpenAsync(id, photoId, ct);
+        Response.Headers.CacheControl = photo.IsPublic ? PublicPhotoCache : "private, no-store";
+        return File(photo.Content, "image/webp");
+    }
+
+    /// <summary>Durée de cache d'une photo publique : un jour.</summary>
+    internal const string PublicPhotoCache = "public, max-age=86400";
 }
 
 /// <summary>Catégories (lecture publique, gestion par les administrateurs).</summary>
