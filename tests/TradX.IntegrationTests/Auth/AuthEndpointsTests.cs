@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
+using TradX.Api.Security;
 using TradX.Application.Auth;
 using TradX.Application.Users;
 using TradX.Domain.Users;
@@ -250,6 +251,45 @@ public sealed class AuthEndpointsTests(TradXApiFactory factory)
         SigningCredentials = new SigningCredentials(
             new SymmetricSecurityKey(Encoding.UTF8.GetBytes(TradXApiFactory.TestSigningKey)), SecurityAlgorithms.HmacSha256),
     });
+
+    [Fact]
+    public async Task Demo_mode_lets_a_new_member_publish_right_after_registering()
+    {
+        using var demo = factory.WithWebHostBuilder(b => b.UseSetting("Auth:RequireEmailConfirmation", "false"));
+        var client = demo.CreateClient();
+        var email = TestUsers.UniqueEmail();
+        var sentBefore = factory.Emails.Sent.Count;
+
+        (await client.PostAsJsonAsync("/api/v1/auth/register", new RegisterRequest(email, TestUsers.Password, "Fanta", "Bamako", null)))
+            .StatusCode.ShouldBe(HttpStatusCode.Accepted);
+        var session = await TestUsers.LoginAsync(client, email, TestUsers.Password);
+        var member = demo.CreateClient();
+        member.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", session.AccessToken);
+
+        (await member.GetFromJsonAsync<MyProfileResponse>("/api/v1/users/me", Json.Options))!.EmailConfirmed.ShouldBeTrue();
+        var created = await member.PostAsJsonAsync("/api/v1/listings", ListingHelpers.NewListing("Lampe de chevet"), Json.Options);
+        created.StatusCode.ShouldBe(HttpStatusCode.Created);
+        var listing = (await created.Content.ReadFromJsonAsync<TradX.Application.Listings.ListingResponse>(Json.Options))!;
+        (await member.PostAsync($"/api/v1/listings/{listing.Id}/publish", null)).StatusCode.ShouldBe(HttpStatusCode.OK);
+        factory.Emails.Sent.Count.ShouldBe(sentBefore);
+    }
+
+    [Fact]
+    public async Task Auth_options_tell_the_site_which_features_exist()
+    {
+        // Mode protégé (configuration des tests) : confirmation exigée.
+        var protectedMode = await _anonymous.GetFromJsonAsync<AuthSettingsResponse>("/api/v1/auth/options", Json.Options);
+        protectedMode!.EmailConfirmationRequired.ShouldBeTrue();
+
+        // Démonstration : pas de confirmation, pas d'e-mail, donc pas de « mot de passe oublié ».
+        using var demo = factory.WithWebHostBuilder(b =>
+        {
+            b.UseSetting("Auth:RequireEmailConfirmation", "false");
+            b.UseSetting("Email:Mode", "Disabled");
+        });
+        var demoMode = await demo.CreateClient().GetFromJsonAsync<AuthSettingsResponse>("/api/v1/auth/options", Json.Options);
+        demoMode.ShouldBe(new AuthSettingsResponse(EmailConfirmationRequired: false, PasswordResetAvailable: false));
+    }
 
     [Fact]
     public async Task Login_puts_the_refresh_token_only_in_a_hardened_cookie()

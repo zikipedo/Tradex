@@ -93,4 +93,12 @@ public sealed class AuthOptions
 
     /// <summary>Adresse du front, utilisée pour construire les liens envoyés par e-mail.</summary>
     public string FrontendBaseUrl { get; set; } = "http://localhost:5173";
+
+    /// <summary>
+    /// Exiger la confirmation de l'adresse e-mail (vrai par défaut, le réglage sûr).
+    /// À faux (projet de démonstration, aucun service d'e-mail payé) : un compte est valide dès l'inscription,
+    /// aucun e-mail de confirmation n'est envoyé, et les comptes non confirmés créés avant le passage à faux
+    /// sont confirmés à leur prochaine connexion.
+    /// </summary>
+    public bool RequireEmailConfirmation { get; set; } = true;
 }

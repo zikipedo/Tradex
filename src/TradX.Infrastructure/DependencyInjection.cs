@@ -79,6 +79,10 @@ public static class DependencyInjection
         {
             services.AddSingleton<IEmailSender, SmtpEmailSender>();
         }
+        else if (string.Equals(section["Mode"], EmailOptions.DisabledMode, StringComparison.OrdinalIgnoreCase))
+        {
+            services.AddSingleton<IEmailSender, DisabledEmailSender>();
+        }
         else
         {
             services.AddSingleton<IEmailSender, FileEmailSender>();

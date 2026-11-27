@@ -71,6 +71,8 @@ public sealed class TradXApiFactory : WebApplicationFactory<Program>, IAsyncLife
         builder.UseSetting("Jwt:SigningKey", TestSigningKey);
         builder.UseSetting("Storage:RootPath", _storageRoot);
         builder.UseSetting("Workers:ExchangeExpiration:Enabled", "false");
+        // Les tests vérifient le mode protégé (confirmation exigée) ; le mode démonstration a ses propres tests.
+        builder.UseSetting("Auth:RequireEmailConfirmation", "true");
         // Limites très hautes pour les tests fonctionnels ; un test dédié vérifie la limitation.
         builder.UseSetting("RateLimiting:AuthPermitLimit", "100000");
         builder.UseSetting("RateLimiting:WritePermitLimit", "100000");

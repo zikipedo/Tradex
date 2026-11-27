@@ -4,7 +4,9 @@ using Microsoft.AspNetCore.RateLimiting;
 using TradX.Api.Errors;
 using TradX.Api.Security;
 using TradX.Application.Auth;
+using Microsoft.Extensions.Options;
 using TradX.Domain.Common;
+using TradX.Infrastructure.Email;
 
 namespace TradX.Api.Controllers;
 
@@ -15,15 +17,30 @@ namespace TradX.Api.Controllers;
 /// <param name="auth">Service d'authentification.</param>
 /// <param name="cookie">Cookie qui transporte le refresh token.</param>
 /// <param name="problems">Écriture des erreurs au format ProblemDetails.</param>
+/// <param name="authOptions">Réglages d'authentification.</param>
+/// <param name="emailOptions">Réglages d'envoi des e-mails.</param>
 [ApiController]
 [Route("api/v1/auth")]
 [AllowAnonymous]
 [EnableRateLimiting(RateLimitPolicies.Auth)]
 [Produces("application/json")]
-public sealed class AuthController(IAuthService auth, RefreshCookie cookie, IProblemDetailsService problems) : ControllerBase
+public sealed class AuthController(
+    IAuthService auth,
+    RefreshCookie cookie,
+    IProblemDetailsService problems,
+    IOptions<AuthOptions> authOptions,
+    IOptions<EmailOptions> emailOptions) : ControllerBase
 {
     private const string GenericEmailMessage =
         "Si cette adresse peut être utilisée, un e-mail vient d'y être envoyé. Pensez à vérifier vos spams.";
+
+    /// <summary>Fonctions de compte disponibles (confirmation d'e-mail exigée, « mot de passe oublié » possible).</summary>
+    [HttpGet("options")]
+    [EndpointSummary("Fonctions de compte disponibles")]
+    [ProducesResponseType<AuthSettingsResponse>(StatusCodes.Status200OK)]
+    public AuthSettingsResponse Settings() => new(
+        authOptions.Value.RequireEmailConfirmation,
+        !string.Equals(emailOptions.Value.Mode, EmailOptions.DisabledMode, StringComparison.OrdinalIgnoreCase));
 
     /// <summary>Crée un compte et envoie un e-mail de confirmation.</summary>
     /// <remarks>La réponse est la même que l'adresse soit nouvelle ou déjà utilisée (pas d'énumération des comptes).</remarks>
