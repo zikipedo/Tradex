@@ -37,6 +37,7 @@
 }
 .topbar__nav a {
   position: relative;
+  white-space: nowrap;
   text-decoration: none;
   font-weight: 500;
   font-size: 0.95rem;
@@ -129,10 +130,9 @@
   transform: translateY(-3.5px) rotate(-45deg);
 }
 
-@media (max-width: 960px) {
+/* En dessous de 1120 px, les quatre liens et les actions ne tiennent plus côte à côte : on passe au menu. */
+@media (max-width: 1120px) {
   .topbar__nav,
-  .topbar__login,
-  .topbar__publish,
   .time-chip .label {
     display: none;
   }
@@ -142,6 +142,12 @@
 }
 .time-chip {
   white-space: nowrap;
+}
+@media (max-width: 960px) {
+  .topbar__login,
+  .topbar__publish {
+    display: none;
+  }
 }
 /* Petit écran : seuls l'avatar (ou « Créer un compte ») et le menu restent ; le reste est dans le menu. */
 @media (max-width: 520px) {

@@ -7,6 +7,7 @@ import { Segmented, SelectField, TextArea, TextField } from '../../components/Fi
 import { ErrorNote, Loader } from '../../components/Loader'
 import { ProtectedImage } from '../../components/ProtectedImage'
 import { conditionLabel } from '../../lib/labels'
+import { selectionNotice, uploadFailure } from '../../lib/photoMessages'
 import { errorMessage, useAction, useResource } from '../../lib/useAsync'
 import './ListingEditorPage.css'
 
@@ -271,12 +272,16 @@ function PhotoManager({ listing, onChange }: { listing: Listing; onChange: (l: L
   const input = useRef<HTMLInputElement>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [notice, setNotice] = useState<string | null>(null)
   const remaining = MAX_PHOTOS - listing.photos.length
 
   const onFiles = async (event: ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files ?? []).slice(0, remaining)
+    const chosen = Array.from(event.target.files ?? [])
+    const files = chosen.slice(0, remaining)
     event.target.value = ''
     setError(null)
+    // On dit clairement quand des photos sont laissées de côté (jamais d'abandon silencieux).
+    setNotice(selectionNotice(chosen.length, remaining, MAX_PHOTOS))
     // Contrôles côté navigateur pour éviter un envoi inutile ; l'API revérifie le vrai format du fichier.
     const invalid = files.find((f) => !ACCEPTED_TYPES.includes(f.type) || f.size > MAX_PHOTO_BYTES)
     if (invalid) {
@@ -284,12 +289,21 @@ function PhotoManager({ listing, onChange }: { listing: Listing; onChange: (l: L
       return
     }
     setBusy(true)
+    let current: File | undefined
     try {
-      for (const file of files) await listingsApi.uploadPhoto(listing.id, file)
-      onChange(await listingsApi.get(listing.id))
+      for (const file of files) {
+        current = file
+        await listingsApi.uploadPhoto(listing.id, file)
+      }
     } catch (err) {
-      setError(errorMessage(err))
+      setError(uploadFailure(current!.name, errorMessage(err), files.length - files.indexOf(current!) - 1))
     } finally {
+      // Même si un envoi échoue en cours de route, les précédents sont enregistrés : on recharge la liste.
+      try {
+        onChange(await listingsApi.get(listing.id))
+      } catch {
+        // L'erreur d'envoi déjà affichée suffit.
+      }
       setBusy(false)
     }
   }
@@ -323,6 +337,11 @@ function PhotoManager({ listing, onChange }: { listing: Listing; onChange: (l: L
           </li>
         ))}
       </ul>
+      {notice && (
+        <p className="alert alert--ok" role="status">
+          {notice}
+        </p>
+      )}
       {error && <p className="alert">{error}</p>}
       {remaining > 0 && (
         <>
