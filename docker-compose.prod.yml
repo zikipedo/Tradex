@@ -1,0 +1,64 @@
+# Déploiement de TradX sur un serveur (VPS) avec Docker.
+#   1. cp deploy/.env.production.example .env.production   puis remplir les valeurs
+#   2. docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build
+# Caddy obtient et renouvelle seul le certificat HTTPS (Let's Encrypt) pour le domaine indiqué.
+name: tradx
+
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: tradx
+      POSTGRES_USER: tradx
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD manquant dans .env.production}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tradx -d tradx"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+    # Aucun port publié : la base n'est joignable que par l'application, sur le réseau Docker interne.
+
+  app:
+    build: .
+    image: tradx:latest
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # « Gss Encryption Mode=Disable » : pas de Kerberos (inutile ici, et sa bibliothèque est absente de l'image).
+      ConnectionStrings__TradX: Host=db;Port=5432;Database=tradx;Username=tradx;Password=${POSTGRES_PASSWORD};Gss Encryption Mode=Disable
+      Jwt__SigningKey: ${JWT_SIGNING_KEY:?JWT_SIGNING_KEY manquant dans .env.production}
+      # Démonstration à une seule instance : les migrations s'appliquent au démarrage.
+      Database__MigrateOnStartup: "true"
+      # Caddy est sur le réseau Docker : on fait confiance à ses en-têtes X-Forwarded-* (IP réelle, HTTPS).
+      ForwardedHeaders__KnownNetworks__0: 172.16.0.0/12
+      Auth__FrontendBaseUrl: https://${DOMAIN}
+      Bootstrap__AdminEmail: ${ADMIN_EMAIL:-}
+    volumes:
+      - uploads:/app/data/uploads
+    restart: unless-stopped
+    # Pas de port publié : seul Caddy reçoit le trafic d'Internet.
+
+  caddy:
+    image: caddy:2-alpine
+    depends_on:
+      - app
+    environment:
+      DOMAIN: ${DOMAIN:?DOMAIN manquant dans .env.production}
+    ports:
+      - "${HTTP_PORT:-80}:80"
+      - "${HTTPS_PORT:-443}:443"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    restart: unless-stopped
+
+volumes:
+  db-data:
+  uploads:
+  caddy-data:
+  caddy-config:

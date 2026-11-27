@@ -1,0 +1,6 @@
+# Caddy : HTTPS automatique (certificat Let's Encrypt obtenu et renouvelé seul) devant l'application.
+# Il transmet l'IP du visiteur et le protocole (X-Forwarded-For / X-Forwarded-Proto) à l'API.
+{$DOMAIN} {
+	encode zstd gzip
+	reverse_proxy app:8080
+}

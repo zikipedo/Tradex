@@ -1,0 +1,21 @@
+# Ce qui ne doit jamais entrer dans le contexte de construction Docker (taille, secrets, données locales).
+.git
+.github
+.claude
+.vs
+.vscode
+.idea
+**/bin
+**/obj
+**/node_modules
+frontend/dist
+tests
+TestResults
+coverage
+.sonarqube
+**/.mail-outbox
+**/uploads
+.env
+.env.*
+!.env.example
+*.md
