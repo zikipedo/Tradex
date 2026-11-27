@@ -74,15 +74,18 @@ internal static class SecuritySetup
     }
 
     /// <summary>
-    /// Derrière un reverse proxy (Nginx, Caddy, équilibreur de charge), l'adresse du client arrive dans
-    /// <c>X-Forwarded-For</c>. On ne fait confiance à cet en-tête <b>que</b> s'il vient d'un proxy déclaré dans
-    /// <c>ForwardedHeaders:KnownProxies</c> : sinon un attaquant pourrait choisir son IP et contourner la limitation de débit.
-    /// Attention : avec une liste vide, ASP.NET Core ferait confiance à tout le monde ; le middleware n'est donc
-    /// activé que si au moins un proxy est déclaré (voir <see cref="HasTrustedProxies"/>).
+    /// Derrière un reverse proxy (Caddy, Nginx, équilibreur d'un hébergeur), l'adresse du client et le protocole
+    /// d'origine (HTTPS) arrivent dans <c>X-Forwarded-For</c> et <c>X-Forwarded-Proto</c>. On ne fait confiance à ces
+    /// en-têtes <b>que</b> s'ils viennent d'un proxy déclaré : une adresse fixe (<c>ForwardedHeaders:KnownProxies</c>)
+    /// ou un réseau (<c>ForwardedHeaders:KnownNetworks</c>, ex. le réseau Docker <c>172.16.0.0/12</c>, utile quand
+    /// l'adresse du proxy change à chaque démarrage). Sinon un attaquant pourrait choisir son IP et contourner la
+    /// limitation de débit. Avec deux listes vides, ASP.NET Core ferait confiance à tout le monde : le middleware n'est
+    /// donc activé que si au moins une entrée est déclarée (voir <see cref="HasTrustedProxies"/>).
     /// </summary>
     private static void AddForwardedHeaders(IServiceCollection services, IConfiguration configuration)
     {
         var proxies = TrustedProxies(configuration);
+        var networks = TrustedNetworks(configuration);
         services.Configure<ForwardedHeadersOptions>(options =>
         {
             options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
@@ -93,16 +96,25 @@ internal static class SecuritySetup
             {
                 options.KnownProxies.Add(IPAddress.Parse(proxy));
             }
+
+            foreach (var network in networks)
+            {
+                options.KnownIPNetworks.Add(System.Net.IPNetwork.Parse(network));
+            }
         });
     }
 
-    /// <summary>Vrai si au moins un reverse proxy de confiance est configuré.</summary>
+    /// <summary>Vrai si au moins un reverse proxy ou réseau de confiance est configuré.</summary>
     /// <param name="configuration">Configuration.</param>
-    /// <returns>Vrai si <c>ForwardedHeaders:KnownProxies</c> n'est pas vide.</returns>
-    public static bool HasTrustedProxies(IConfiguration configuration) => TrustedProxies(configuration).Length > 0;
+    /// <returns>Vrai si <c>ForwardedHeaders:KnownProxies</c> ou <c>ForwardedHeaders:KnownNetworks</c> n'est pas vide.</returns>
+    public static bool HasTrustedProxies(IConfiguration configuration) =>
+        TrustedProxies(configuration).Length > 0 || TrustedNetworks(configuration).Length > 0;
 
     private static string[] TrustedProxies(IConfiguration configuration) =>
         configuration.GetSection("ForwardedHeaders:KnownProxies").Get<string[]>() ?? [];
+
+    private static string[] TrustedNetworks(IConfiguration configuration) =>
+        configuration.GetSection("ForwardedHeaders:KnownNetworks").Get<string[]>() ?? [];
 
     private static void ConfigureBearer(JwtBearerOptions bearer, JwtOptions jwt)
     {
