@@ -46,6 +46,20 @@ jobs:
       - name: Dépendances vulnérables (échec à partir du niveau « high »)
         run: npm audit --audit-level=high
 
+  # Image de production : vérifie à chaque push que le Dockerfile se construit toujours (sans la publier).
+  docker-image:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Construction de l'image de production
+        run: docker build -t tradx:ci .
+
+      - name: L'image démarre et sert le site
+        run: |
+          docker run --rm --entrypoint sh tradx:ci -c "test -f /app/wwwroot/index.html && test -f /app/libSkiaSharp.so && test ! -d /app/runtimes"
+
   build-test:
     runs-on: ubuntu-latest
     timeout-minutes: 20

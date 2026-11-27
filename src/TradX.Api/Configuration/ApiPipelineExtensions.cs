@@ -35,6 +35,9 @@ internal static class ApiPipelineExtensions
 
         app.UseHttpsRedirection();
 
+        // Site React compilé (image de production) : fichiers publics, servis avant l'authentification.
+        app.UseFrontendFiles();
+
         app.UseCors(ApiServiceCollectionExtensions.FrontendCorsPolicy);
 
         // 4. Qui est-ce ? A-t-il le droit ? Pas trop de requêtes ? (le limiteur utilise l'identité).
@@ -44,6 +47,7 @@ internal static class ApiPipelineExtensions
 
         app.MapControllers();
         app.MapHealthChecks("/health").AllowAnonymous();
+        app.MapFrontendFallback();
 
         // Documentation interactive : uniquement en développement (jamais exposée en production).
         if (app.Environment.IsDevelopment())

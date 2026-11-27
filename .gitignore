@@ -485,3 +485,6 @@ uploads/
 .sonarqube/
 TestResults/
 coverage/
+
+# Secrets de production (docker-compose.prod.yml)
+.env.production
