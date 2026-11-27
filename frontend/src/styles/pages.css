@@ -413,3 +413,26 @@ dialog.dialog::backdrop {
 .report-link:hover {
   color: var(--rust);
 }
+
+/* ---------- Rappel de développement (absent du build de production) ---------- */
+
+.dev-notice {
+  display: grid;
+  gap: var(--s2);
+  padding: var(--s4);
+  border: 1.5px dashed var(--focus);
+  border-radius: var(--r-sm);
+  background: rgb(31 95 139 / 0.07);
+  color: var(--ink);
+  font-size: 0.92rem;
+}
+.dev-notice .label {
+  color: var(--focus);
+}
+.dev-notice code {
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+  background: var(--kaolin);
+  font-size: 0.88em;
+  overflow-wrap: anywhere;
+}

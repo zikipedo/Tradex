@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { authApi, usersApi } from '../../api/endpoints'
+import { DevMailNotice } from '../../components/DevMailNotice'
 import { useAuth } from '../../auth/AuthContext'
 import { TextArea, TextField } from '../../components/Field'
 import { formatDate } from '../../lib/format'
@@ -90,7 +91,10 @@ export default function ProfilePage() {
               <>
                 <p className="muted">Pas encore confirmée : tu ne peux ni publier ni échanger.</p>
                 {resent ? (
-                  <p className="alert alert--ok">{resent}</p>
+                  <>
+                    <p className="alert alert--ok">{resent}</p>
+                    <DevMailNotice />
+                  </>
                 ) : (
                   <button
                     type="button"

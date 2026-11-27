@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { authApi } from '../../api/endpoints'
+import { DevMailNotice } from '../../components/DevMailNotice'
 import { TextField } from '../../components/Field'
 import { useAction } from '../../lib/useAsync'
 import { AuthShell } from './AuthShell'
@@ -30,6 +31,7 @@ export default function ForgotPasswordPage() {
         <div className="auth__form" role="status">
           <h1 className="h2">C’est envoyé.</h1>
           <p className="muted">{done}</p>
+          <DevMailNotice />
           <p className="muted">Le lien est valable une heure.</p>
           <Link to="/connexion" className="btn">
             Retour à la connexion

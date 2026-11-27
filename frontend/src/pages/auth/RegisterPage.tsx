@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { authApi } from '../../api/endpoints'
+import { DevMailNotice } from '../../components/DevMailNotice'
 import { TextField } from '../../components/Field'
 import { useAction } from '../../lib/useAsync'
 import { AuthShell } from './AuthShell'
@@ -44,6 +45,7 @@ export default function RegisterPage() {
           <p className="label muted">Presque fini</p>
           <h1 className="h2">Regarde ta boîte mail.</h1>
           <p className="muted">{done}</p>
+          <DevMailNotice />
           <p className="muted">Le lien de confirmation est valable 24 heures. Sans confirmation, tu peux regarder les annonces mais pas encore échanger.</p>
           <Link to="/connexion" className="btn btn--action">
             Aller à la connexion
