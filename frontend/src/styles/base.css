@@ -360,6 +360,71 @@ p {
   outline-offset: 1px;
   border-color: var(--focus);
 }
+/*
+ * Listes déroulantes : la liste ouverte reprend le style du site (coins arrondis, coton, encre)
+ * au lieu du menu gris et bleu du système. On garde un vrai <select> : clavier, lecteurs d'écran
+ * et mobile fonctionnent comme avant. Les navigateurs qui ne gèrent pas encore « base-select »
+ * affichent simplement la liste native.
+ */
+@supports (appearance: base-select) {
+  .field select,
+  .filter-select,
+  .field select::picker(select),
+  .filter-select::picker(select) {
+    appearance: base-select;
+  }
+  .field select,
+  .filter-select {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--s2);
+    cursor: pointer;
+  }
+  .field select::picker-icon,
+  .filter-select::picker-icon {
+    color: var(--text-2);
+    transition: rotate var(--dur-fast) var(--ease-out);
+  }
+  .field select:open::picker-icon,
+  .filter-select:open::picker-icon {
+    rotate: 180deg;
+  }
+  .field select::picker(select),
+  .filter-select::picker(select) {
+    margin-block: 6px;
+    padding: var(--s1);
+    border: 1.5px solid var(--line-strong);
+    border-radius: var(--r-md);
+    background: var(--surface);
+    box-shadow: var(--shadow-2);
+    max-height: min(60vh, 24rem);
+    overflow-y: auto;
+  }
+  .field select option,
+  .filter-select option {
+    padding: var(--s2) var(--s3);
+    border-radius: var(--r-sm);
+    cursor: pointer;
+  }
+  .field select option::checkmark,
+  .filter-select option::checkmark {
+    display: none;
+  }
+  .field select option:hover,
+  .field select option:focus-visible,
+  .filter-select option:hover,
+  .filter-select option:focus-visible {
+    background: var(--cotton);
+    outline: none;
+  }
+  .field select option:checked,
+  .filter-select option:checked {
+    background: var(--ink);
+    color: var(--cotton);
+    font-weight: 500;
+  }
+}
 .field [aria-invalid='true'] {
   border-color: var(--rust);
 }
