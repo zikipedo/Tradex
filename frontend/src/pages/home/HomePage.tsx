@@ -4,7 +4,7 @@ import { listingsApi } from '../../api/endpoints'
 import type { Paged, ListingSummary } from '../../api/types'
 import { ListingCard } from '../../components/ListingCard'
 import { Motif, MotifBand, MotifFabric } from '../../components/Motif'
-import { pickHeroListings } from '../../lib/heroListings'
+import { pickHeroListings, withPhotosFirst } from '../../lib/heroListings'
 import { directionLabel, typeLabel } from '../../lib/labels'
 import { motifFor } from '../../lib/motifs'
 import { EASE, gsap, prefersReducedMotion, useGSAP } from '../../motion/gsap'
@@ -118,7 +118,8 @@ export function HomePage() {
     { scope: steps },
   )
 
-  const items = latest?.items ?? []
+  // La grande carte et les cartes de côté montrent d'abord les annonces avec photo.
+  const items = withPhotosFirst(latest?.items ?? [])
   const [feature, ...rest] = items
 
   return (
