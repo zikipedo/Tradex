@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { ListingSummary } from '../api/types'
-import { pickHeroListings } from './heroListings'
+import { pickHeroListings, withPhotosFirst } from './heroListings'
 
 function listing(id: string, direction: 'Offer' | 'Request', photo: boolean): ListingSummary {
   return {
@@ -18,6 +18,18 @@ function listing(id: string, direction: 'Offer' | 'Request', photo: boolean): Li
     publishedAt: null,
   }
 }
+
+describe('withPhotosFirst', () => {
+  it('place les annonces avec photo devant, en gardant l’ordre de publication dans chaque groupe', () => {
+    const sorted = withPhotosFirst([
+      listing('recente-sans-photo', 'Offer', false),
+      listing('photo-1', 'Offer', true),
+      listing('ancienne-sans-photo', 'Request', false),
+      listing('photo-2', 'Request', true),
+    ])
+    expect(sorted.map((l) => l.id)).toEqual(['photo-1', 'photo-2', 'recente-sans-photo', 'ancienne-sans-photo'])
+  })
+})
 
 describe('pickHeroListings', () => {
   it('montre une offre et une demande, en privilégiant celles qui ont une photo', () => {
