@@ -9,6 +9,8 @@
 **/obj
 **/node_modules
 frontend/dist
+# Site construit localement pour Visual Studio : l'image reconstruit le sien.
+src/TradX.Api/wwwroot
 tests
 TestResults
 coverage

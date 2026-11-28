@@ -3,7 +3,10 @@ import { Link } from 'react-router-dom'
 import { listingsApi } from '../../api/endpoints'
 import type { Paged, ListingSummary } from '../../api/types'
 import { ListingCard } from '../../components/ListingCard'
-import { Motif, MotifBand } from '../../components/Motif'
+import { Motif, MotifBand, MotifFabric } from '../../components/Motif'
+import { pickHeroListings } from '../../lib/heroListings'
+import { directionLabel, typeLabel } from '../../lib/labels'
+import { motifFor } from '../../lib/motifs'
 import { EASE, gsap, prefersReducedMotion, useGSAP } from '../../motion/gsap'
 import { useReveal } from '../../motion/useReveal'
 import { plural } from '../../lib/format'
@@ -62,9 +65,19 @@ export function HomePage() {
         .from('.hero__lede, .hero__ctas', { autoAlpha: 0, y: 18, duration: 0.8, stagger: 0.12 }, 0.55)
         .from('.hero__weave path', { drawSVG: '0%', duration: 1.6, stagger: 0.18, ease: 'power2.inOut' }, 0.3)
         .from('.hero__weave .hero__node', { scale: 0, transformOrigin: '50% 50%', duration: 0.6, ease: EASE.snap }, 1.45)
-        .from('.hero__card', { autoAlpha: 0, y: 26, rotate: (i) => (i ? 4 : -3), duration: 0.9, stagger: 0.14 }, 1.2)
     },
     { scope: hero },
+  )
+
+  // Les cartes d'annonces arrivent avec les données : elles ont leur propre entrée, une fois chargées.
+  const heroListings = pickHeroListings(latest?.items ?? [])
+  const heroKey = heroListings.map((l) => l.id).join()
+  useGSAP(
+    () => {
+      if (!heroKey || prefersReducedMotion()) return
+      gsap.from('.hero__card', { autoAlpha: 0, y: 26, rotate: (i) => (i ? 4 : -3), duration: 0.9, stagger: 0.14, delay: 0.6 })
+    },
+    { scope: hero, dependencies: [heroKey] },
   )
 
   // Les quatre étapes défilent à l'horizontale sur grand écran (section épinglée) ; empilées sur mobile.
@@ -147,18 +160,29 @@ export function HomePage() {
           </g>
         </svg>
 
-        <div className="hero__cards" aria-hidden="true">
-          <div className="hero__card hero__card--a squircle">
-            <span className="label">Je propose · Objet</span>
-            <strong>Perceuse à percussion</strong>
-            <span className="muted">Magnambougou</span>
-          </div>
-          <div className="hero__card hero__card--b squircle">
-            <span className="label">Je cherche · Service</span>
-            <strong>Cours de maths, niveau 3e</strong>
-            <span className="muted">ACI 2000</span>
-          </div>
-        </div>
+        {/* Deux vraies annonces de la base (avec leur photo), reliées par le nœud : l'échange en image. */}
+        {heroListings.length > 0 && (
+          <ul className="hero__cards" aria-label="Annonces du moment">
+            {heroListings.map((listing, index) => (
+              <li key={listing.id} className={`hero__card hero__card--${index === 0 ? 'a' : 'b'} squircle`}>
+                <Link to={`/annonces/${listing.id}`} className="hero__card-link">
+                  <span className={`hero__card-media${listing.direction === 'Request' ? ' is-request' : ''}`}>
+                    {listing.coverPhotoUrl ? (
+                      <img src={listing.coverPhotoUrl} alt="" loading="eager" decoding="async" />
+                    ) : (
+                      <MotifFabric name={motifFor(listing.categoryName)} cell={22} />
+                    )}
+                  </span>
+                  <span className="label">
+                    {directionLabel[listing.direction]} · {typeLabel[listing.type]}
+                  </span>
+                  <strong>{listing.title}</strong>
+                  <span className="muted">{listing.neighborhood ?? listing.city}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
 
         <div className="hero__bottom">
           <p className="hero__lede lede">

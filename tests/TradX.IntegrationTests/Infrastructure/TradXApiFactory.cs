@@ -70,6 +70,8 @@ public sealed class TradXApiFactory : WebApplicationFactory<Program>, IAsyncLife
         builder.UseSetting("Cors:AllowedOrigins:0", "http://localhost:5173");
         builder.UseSetting("Jwt:SigningKey", TestSigningKey);
         builder.UseSetting("Storage:RootPath", _storageRoot);
+        // Dossier web vide : un site construit en local (npm run build:api) ne doit pas changer le comportement testé.
+        builder.UseSetting(WebHostDefaults.WebRootKey, Path.Combine(_storageRoot, "wwwroot-vide"));
         builder.UseSetting("Workers:ExchangeExpiration:Enabled", "false");
         // Les tests vérifient le mode protégé (confirmation exigée) ; le mode démonstration a ses propres tests.
         builder.UseSetting("Auth:RequireEmailConfirmation", "true");
